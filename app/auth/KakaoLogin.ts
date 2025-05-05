@@ -1,58 +1,97 @@
-import * as AuthSession from "expo-auth-session";
-import axios from "axios";
+// KakaoLogin.ts
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 
-const REST_API_KEY = process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY || "";
-const REDIRECT_URI = AuthSession.makeRedirectUri();
+// 백엔드 서버 URL 설정
+const BACKEND_URL = 'http://localhost:8080';
+const KAKAO_AUTH_URL = `${BACKEND_URL}/oauth2/authorization/kakao`;
 
-const discovery = {
-  authorizationEndpoint: "https://kauth.kakao.com/oauth/authorize",
-  tokenEndpoint: "https://kauth.kakao.com/oauth/token",
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  needPhoneVerification: boolean;
+  userId: number;
+}
+
+// 카카오 인증 응답 처리 함수
+const handleKakaoAuthResponse = async (url: string): Promise<AuthResponse> => {
+  return new Promise((resolve, reject) => {
+    try {
+      // JSON 응답 추출 로직
+      const jsonMatch = url.match(/{.*}/);
+      if (jsonMatch) {
+        const jsonStr = jsonMatch[0];
+        const authData = JSON.parse(jsonStr) as AuthResponse;
+        resolve(authData);
+      } else {
+        reject(new Error("JSON 데이터를 찾을 수 없습니다"));
+      }
+    } catch (error) {
+      reject(error);
+    }
+  });
 };
 
-export async function signInWithKakao() {
-  const request = new AuthSession.AuthRequest({
-    clientId:
-      REST_API_KEY ||
-      (() => {
-        throw new Error("KAKAO_REST_API_KEY is not defined");
-      })(),
-    redirectUri: REDIRECT_URI,
-    responseType: AuthSession.ResponseType.Code,
-  });
-
-  const result = await request.promptAsync(discovery);
-
-  if (result.type !== "success" || !result.params.code) {
-    throw new Error("Kakao login failed");
-  }
-
-  //Authorization code -> Access token 요청
-  const tokenResponse = await axios.post(
-    discovery.tokenEndpoint,
-    new URLSearchParams({
-      grant_type: "authorization_code",
-      client_id: REST_API_KEY,
-      redirect_uri: REDIRECT_URI,
-      code: result.params.code,
-    }),
-    {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
+// URL 리스너 설정
+export const setupKakaoAuthListener = (callback: (response: AuthResponse) => void) => {
+  // URL 이벤트 핸들러
+  const handleUrl = async ({ url }: { url: string }) => {
+    if (url && url.includes('auth-callback')) {
+      try {
+        const authResponse = await handleKakaoAuthResponse(url);
+        callback(authResponse);
+      } catch (error) {
+        console.error("인증 응답 처리 오류:", error);
+      }
     }
-  );
-  if (tokenResponse.status !== 200) {
-    throw new Error("Failed to get access token");
-  }
+  };
 
-  const accessToken = tokenResponse.data.access_token;
+  // 이벤트 리스너 등록
+  const subscription = Linking.addEventListener('url', handleUrl);
 
-  //사용자 정보 요청
-  const userInfo = await axios.get("https://kapi.kakao.com/v2/user/me", {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+  // 앱이 이미 열려있고 URL로 실행된 경우 처리
+  Linking.getInitialURL().then((url: string | null) => {
+    if (url && url.includes('auth-callback')) {
+      handleUrl({ url });
+    }
   });
 
-  return { token: accessToken, user: userInfo.data };
+  // 리스너 제거 함수 반환
+  return () => {
+    subscription.remove();
+  };
+};
+
+// 카카오 로그인 함수
+export async function signInWithKakao(): Promise<{ token: string; user: any }> {
+  // 앱으로 돌아올 콜백 URL 생성
+  const redirectUrl = Linking.createURL('auth-callback');
+
+  return new Promise((resolve, reject) => {
+    // URL 리스너 설정
+    const removeListener = setupKakaoAuthListener((authResponse) => {
+      removeListener(); // 리스너 제거
+      resolve({
+        token: authResponse.accessToken,
+        user: {
+          id: authResponse.userId,
+          needPhoneVerification: authResponse.needPhoneVerification
+        }
+      });
+    });
+
+    // 인증 세션 열기
+    WebBrowser.openAuthSessionAsync(KAKAO_AUTH_URL, redirectUrl)
+    .then((result) => {
+      if (result.type !== 'success') {
+        removeListener(); // 리스너 제거
+        reject(new Error('카카오 인증이 취소되었거나 실패했습니다'));
+      }
+      // 성공 시 리스너에서 resolve 처리
+    })
+    .catch((error) => {
+      removeListener(); // 리스너 제거
+      reject(error);
+    });
+  });
 }
