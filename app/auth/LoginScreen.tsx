@@ -1,5 +1,5 @@
 import { View, Text } from "@/components/Themed";
-import { Image, TouchableOpacity } from "react-native";
+import { Image, TouchableOpacity, Alert } from "react-native";
 import EditScreenInfo from "@/components/EditScreenInfo";
 
 import { useRouter } from "expo-router";
@@ -14,10 +14,21 @@ export default function LoginScreen() {
   const handleKakaoLogin = async () => {
     try {
       const { token, user } = await signInWithKakao();
+
       console.log("Access Token:", token);
       console.log("User Info:", user);
-    } catch (error) {
+
+      if (user.needPhoneVerification) {
+        router.push({
+          pathname: "/auth/VerifyPhone",
+          params: { userId: user.id },
+        });
+      } else {
+        router.push("/");
+      }
+    } catch (error: any) {
       console.error("Kakao login error:", error);
+      Alert.alert("로그인 실패", error.message || "알 수 없는 오류입니다.");
     }
   };
 
