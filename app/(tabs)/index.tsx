@@ -29,7 +29,7 @@ export default function Index() {
       <EditScreenInfo path="app/(tabs)/index.tsx" />
       <ButtonContainer>
         <Button>
-          <ButtonText>시작하기</ButtonText>
+          <ButtonText>회원가입</ButtonText>
         </Button>
       </ButtonContainer>
       <ButtonContainer>

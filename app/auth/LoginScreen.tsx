@@ -1,7 +1,6 @@
 import { View, Text } from "@/components/Themed";
 import { Image, TouchableOpacity, Alert } from "react-native";
-import EditScreenInfo from "@/components/EditScreenInfo";
-
+import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import { styles } from "../../styles/ViewStyle";
 import { ButtonContainer } from "@/styles/Button";
