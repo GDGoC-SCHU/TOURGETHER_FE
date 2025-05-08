@@ -6,32 +6,57 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { ButtonContainer, Button, ButtonText } from "@/styles/Button";
 
 export default function VerifyPhone() {
-  const [input, setInput] = useState<string>("");
-  const [isFocused, setIsFocused] = useState(false);
+  const [phone, setPhone] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const [code, setCode] = useState("");
   const router = useRouter();
 
-  const handleVerify = async () => {
+  const verifyCode = async () => {
+    if (code.trim().length === 0) {
+      Alert.alert("인증번호를 입력해주세요.");
+      return;
+    }
+    setIsLoading(true);
     try {
       const res = await axios.post(
-        `http://localhost:8080/api/auth/phone/verify?userId=${userId}&code=${code}`
+        "http://localhost:8080/api/auth/phone/verify",
+        null,
+        {
+          params: { userId, code },
+        }
       );
       Alert.alert("인증 완료", res.data);
-      router.push("/");
+      router.replace("/");
     } catch (err: any) {
-      Alert.alert("인증 실패", err.response?.data || err.message);
+      Alert.alert(
+        "인증 실패",
+        err.response?.data || err.message || "오류 발생"
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const ButtonChange = (text: string) => {
-    setInput(text);
-    if (text.length < 11) {
-      setIsFocused(false);
-    } else if (text.length === 11) {
-      setIsFocused(true);
+  const requestSms = async () => {
+    if (phone.trim().length < 11) {
+      Alert.alert("정확한 전화번호를 입력해주세요.");
+      return;
     }
-    console.log(text);
+    setIsLoading(true);
+    setPhone(phone.replace(/[^0-9]/g, "")); // 숫자만 남김
+    try {
+      await axios.post(
+        `http://localhost:8080/api/auth/phone/send?phone=${phone}`,
+        null,
+        { params: { userId: userId } }
+      );
+      Alert.alert("인증번호 전송", "인증번호가 전송되었습니다.");
+    } catch (err: any) {
+      Alert.alert("인증번호 전송 실패", err.response?.data || err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -53,7 +78,7 @@ export default function VerifyPhone() {
           </View>
           <View style={styles.horizontal_line} />
           <ButtonContainer>
-            <Button onPress={() => ButtonChange(input)}>
+            <Button onPress={requestSms}>
               <ButtonText>인증번호 전송</ButtonText>
             </Button>
           </ButtonContainer>
@@ -76,7 +101,7 @@ export default function VerifyPhone() {
       </View>
       <View style={styles.footer}>
         <ButtonContainer>
-          <Button onPress={handleVerify}>
+          <Button onPress={verifyCode}>
             <ButtonText>인증하기</ButtonText>
           </Button>
         </ButtonContainer>
