@@ -202,7 +202,11 @@ export default function Register() {
         <Text style={{ fontSize: 24, fontWeight: "bold", marginTop: 20 }}>
           성별
         </Text>
-        <Picker selectedValue={gender} onValueChange={setGender}>
+        <Picker
+          selectedValue={gender}
+          onValueChange={setGender}
+          style={{ marginTop: 20 }}
+        >
           <Picker.Item label="선택" value="" />
           <Picker.Item label="남성" value="male" />
           <Picker.Item label="여성" value="female" />
@@ -215,7 +219,7 @@ export default function Register() {
 
         {Platform.OS === "web" ? (
           <TextInput
-            style={{ borderWidth: 1, padding: 10 }}
+            style={{ borderWidth: 1, padding: 10, marginTop: 20 }}
             value={birthDate.toISOString().split("T")[0]}
             onChangeText={(text) => setBirthDate(new Date(text))}
             placeholder="YYYY-MM-DD"
