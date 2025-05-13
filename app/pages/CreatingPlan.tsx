@@ -1,15 +1,20 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Platform } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { Calendar } from "react-native-calendars";
 import NavBar from "@/layouts/NavBar";
+import { useRouter } from "expo-router";
+
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export default function CreatingPlan() {
   const { city } = useLocalSearchParams();
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
   const [selectingEnd, setSelectingEnd] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   //date select
   const handleDayPress = (day: { dateString: string }) => {
@@ -43,25 +48,52 @@ export default function CreatingPlan() {
     const last = new Date(endDate);
 
     while (current <= last) {
-      const dateStr = current.toISOString().split("T")[0];
-        dates[dateStr] = {
-        selected: true,
-        selectedColor: "#4f46e5",
-      };
+        const day = current.getDate();
+        const dateStr = current.toISOString().split("T")[0];
+            dates[dateStr] = {
+            selected: true,
+            selectedColor: "#4f46e5",
+        };
       current.setDate(current.getDate() + 1);
     }
 
     return dates;
   };
 
-  const handleGeneratePlan = () => {
+  const handleGeneratePlan = async () => {
     if (!startDate || !endDate) {
       alert("Please select both a start and end date.");
       return;
     }
-    alert(`Generating AI travel course for ${city} from ${startDate} to ${endDate}`);
-    // TODO: Call backend API with city, startDate, endDate
+    
+    setIsLoading(true);
+    try{
+        const res = await fetch(`${BACKEND_URL}/api/plan`,{
+            method: "POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({city, startDate, endDate})
+        });
+        const data = await res.json();
+        console.log("받은 응답 : ",data);
+        router.push({
+            pathname:"/pages/PlanResult",
+            params: {plan:JSON.stringify(data.plan ?? data)}
+        });
+    }catch(err){
+        alert("failed to GeneratePlan");
+    }finally{
+        setIsLoading(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "white" }}>
+        <ActivityIndicator size="large" color="#4f46e5" />
+        <Text style={{ marginTop: 15 }}>Generating your travel plan...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>

@@ -15,6 +15,8 @@ import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from "axios";
 
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+
 export default function Register() {
   const [nickName, setNickName] = useState("");
   const [bio, setBio] = useState("");
@@ -74,7 +76,7 @@ export default function Register() {
   // nickName 중복 검사
   const checkNickName = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/user/nickname");
+      const res = await fetch(`${BACKEND_URL}/api/user/nickname`);
       const data = await res.json();
       if (data.available) {
         alert("Nickname is available");
@@ -113,12 +115,8 @@ export default function Register() {
     };
 
     try {
-      const res = await axios.post("http://localhost:8080/api/user/register", {
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payLoad),
+      const res = await axios.post(`${BACKEND_URL}/api/tag`, payLoad,{
+        headers:{"Content-Type":"application/json"},
       });
       if (res.status === 200) {
         alert("Sign-up successful");

@@ -1,14 +1,20 @@
-import { Image, TouchableOpacity, Alert,View,Text } from "react-native";
+import { Image, TouchableOpacity, Alert, View, Text } from "react-native";
 import * as SecureStore from "expo-secure-store";
-import { useRouter,useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { styles } from "../../styles/ViewStyle";
 import { ButtonContainer } from "@/styles/Button";
-
 import { signInWithKakao } from "./KakaoLogin";
+import axios from "axios";
+import { useState, useEffect } from "react";
+
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const REDIRECT_URL = process.env.EXPO_PUBLIC_REDIRECT_URL;
 
 export default function LoginScreen() {
   const router = useRouter();
-  const {mode} = useLocalSearchParams();
+  const { token,mode } = useLocalSearchParams();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleKakaoLogin = async () => {
     try {
@@ -18,19 +24,43 @@ export default function LoginScreen() {
       console.log("User Info:", user);
 
       if (mode === "signup") {
-      if (user.needPhoneVerification) {
-        router.push({ pathname: "/auth/VerifyPhone", params: { userId: user.id } });
+        if (user.needPhoneVerification) {
+          router.push({ pathname: "/auth/VerifyPhone", params: { userId: user.id } });
+        } else {
+          router.push("/auth/Register");
+        }
       } else {
-        router.push("/auth/Register"); // or skip if already registered
+        router.push("/pages/Home");
       }
-    } else {
-      router.push("/pages/Home"); // 로그인 시 홈으로 이동
-    }
-    }catch (error: any) {
+    } catch (error: any) {
       console.error("Kakao login error:", error);
       Alert.alert("로그인 실패", error.message || "알 수 없는 오류입니다.");
     }
   };
+
+  const handleGoogleLogin = () => {
+    const redirectUrl = `${BACKEND_URL}/oauth2/authorization/google?mode=${mode}`;
+    window.location.assign(redirectUrl);
+  };
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const token = url.searchParams.get("token");
+
+    if (token) {
+      SecureStore.setItemAsync("accessToken", token).then(() => {
+      url.searchParams.delete("token");
+      window.history.replaceState({}, "", url.toString());
+      console.log(token);
+      if (mode === "signup") {
+        router.replace("/auth/Register");
+      } else {
+        router.replace("/pages/Home");
+      }
+    });
+  }
+
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -40,16 +70,18 @@ export default function LoginScreen() {
         resizeMode="contain"
       />
       <Text style={styles.title}>Login</Text>
-      <View
-        style={styles.separator}
-      />
+      <View style={styles.separator} />
+
       <ButtonContainer>
-        <Image
-          source={require("@/assets/images/google.png")}
-          style={{ width: 300, height: 50, marginBottom: 20 }}
-          resizeMode="contain"
-        />
+        <TouchableOpacity onPress={handleGoogleLogin}>
+          <Image
+            source={require("@/assets/images/google.png")}
+            style={{ width: 300, height: 50, marginBottom: 20 }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
       </ButtonContainer>
+
       <ButtonContainer>
         <TouchableOpacity onPress={handleKakaoLogin}>
           <Image

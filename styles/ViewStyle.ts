@@ -68,6 +68,47 @@ headerIcon: {
   height: 30,
   marginLeft:10
 },
-
+planContainer:{
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#fff",
+},
+planTitle:{
+   fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+},
+card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  day: {
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 12,
+    color: "#4f46e5",
+  },
+  entry: {
+    marginBottom: 8,
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  label: {
+    fontWeight: "600",
+    color: "#555",
+  },
+  value: {
+    marginLeft: 4,
+    color: "#111",
+    flexShrink: 1,
+  },
 }); 
 
