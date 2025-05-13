@@ -1,7 +1,6 @@
-import { View, Text } from "@/components/Themed";
-import { Image, TouchableOpacity, Alert } from "react-native";
+import { Image, TouchableOpacity, Alert,View,Text } from "react-native";
 import * as SecureStore from "expo-secure-store";
-import { useRouter } from "expo-router";
+import { useRouter,useLocalSearchParams } from "expo-router";
 import { styles } from "../../styles/ViewStyle";
 import { ButtonContainer } from "@/styles/Button";
 
@@ -9,6 +8,7 @@ import { signInWithKakao } from "./KakaoLogin";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const {mode} = useLocalSearchParams();
 
   const handleKakaoLogin = async () => {
     try {
@@ -17,15 +17,16 @@ export default function LoginScreen() {
       console.log("Access Token:", token);
       console.log("User Info:", user);
 
+      if (mode === "signup") {
       if (user.needPhoneVerification) {
-        router.push({
-          pathname: "/auth/VerifyPhone",
-          params: { userId: user.id },
-        });
+        router.push({ pathname: "/auth/VerifyPhone", params: { userId: user.id } });
       } else {
-        router.push("/");
+        router.push("/auth/Register"); // or skip if already registered
       }
-    } catch (error: any) {
+    } else {
+      router.push("/pages/Home"); // 로그인 시 홈으로 이동
+    }
+    }catch (error: any) {
       console.error("Kakao login error:", error);
       Alert.alert("로그인 실패", error.message || "알 수 없는 오류입니다.");
     }
@@ -38,11 +39,9 @@ export default function LoginScreen() {
         style={{ width: 300, height: 300, marginBottom: 20 }}
         resizeMode="contain"
       />
-      <Text style={styles.title}>로그인</Text>
+      <Text style={styles.title}>Login</Text>
       <View
         style={styles.separator}
-        lightColor="#eee"
-        darkColor="rgba(255,255,255,0.1)"
       />
       <ButtonContainer>
         <Image

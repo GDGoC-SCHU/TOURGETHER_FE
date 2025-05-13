@@ -8,8 +8,13 @@ import { styles } from "../../styles/ViewStyle";
 
 export default function Index() {
   const router = useRouter();
-  const LoginhandlePress = () => {
-    router.push("/auth/LoginScreen");
+
+  const handleLoginPress = () => {
+  router.push({ pathname: "/auth/LoginScreen", params: { mode: "login" } });
+  };
+  
+  const handleSignUpPress = () => {
+  router.push({ pathname: "/auth/LoginScreen", params: { mode: "signup" } });
   };
 
   return (
@@ -20,7 +25,7 @@ export default function Index() {
         resizeMode="contain"
       />
       <Text style={styles.title}>Tourgether</Text>
-      <Text style={styles.title}>함께하는 즐거움</Text>
+      <Text style={styles.title}>Together, Tourgether</Text>
       <View
         style={styles.separator}
         lightColor="#eee"
@@ -28,13 +33,13 @@ export default function Index() {
       />
       <EditScreenInfo path="app/(tabs)/index.tsx" />
       <ButtonContainer>
-        <Button>
-          <ButtonText>회원가입</ButtonText>
+        <Button onPress={handleSignUpPress}>
+          <ButtonText>Sign-Up</ButtonText>
         </Button>
       </ButtonContainer>
       <ButtonContainer>
-        <Button onPress={LoginhandlePress}>
-          <ButtonText>로그인</ButtonText>
+        <Button onPress={handleLoginPress}>
+          <ButtonText>Login</ButtonText>
         </Button>
       </ButtonContainer>
     </View>

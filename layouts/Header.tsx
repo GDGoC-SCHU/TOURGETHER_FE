@@ -8,7 +8,7 @@ export default function Header(){
         <View style={styles.headerContainer}>
       <Image
         source={require("@/assets/images/logo.png")}
-        style={{ width: 40, height: 55, marginTop: 20, marginLeft: 20 }}
+        style={{ width: 40, height: 55, marginTop: 20, marginLeft: 10 }}
       />
       <View style={styles.headerIcon}>
         <SimpleLineIcons name="bell" size={24} color="black" />

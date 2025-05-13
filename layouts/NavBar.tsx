@@ -12,19 +12,19 @@ export default function NavBar() {
       <View style={styles.NavBar}>
         <View style={styles.NavBarIcon}>
           <Feather name="home" size={24} color="black" />
-          <Text style={styles.NavBarText}>홈</Text>
+          <Text style={styles.NavBarText}>HOME</Text>
         </View>
         <View style={styles.NavBarIcon}>
           <MaterialIcons name="chat-bubble-outline" size={24} color="black" />
-          <Text style={styles.NavBarText}>게시판</Text>
+          <Text style={styles.NavBarText}>BOARD</Text>
         </View>
         <View style={styles.NavBarIcon}>
           <MaterialCommunityIcons name="chat-outline" size={24} color="black" />
-          <Text style={styles.NavBarText}>채팅</Text>
+          <Text style={styles.NavBarText}>CHAT</Text>
         </View>
         <View style={styles.NavBarIcon}>
           <FontAwesome name="user-circle-o" size={24} color="black" />
-          <Text style={styles.NavBarText}>프로필</Text>
+          <Text style={styles.NavBarText}>MY</Text>
         </View>
       </View>
     </View>

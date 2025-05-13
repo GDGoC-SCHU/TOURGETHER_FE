@@ -11,16 +11,15 @@ const { width: screenWidth } = Dimensions.get('window');
 
 export default function Home() {
   const router = useRouter();
-  const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const cities = [
-    { name: '서울', image: require('@/assets/images/seoul.png') },
-    { name: '부산', image: require('@/assets/images/busan.png') },
-    { name: '제주도', image: require('@/assets/images/jeju.png') },
-    { name: '경주', image: require('@/assets/images/gyeongju.png') },
-    { name: '여수', image: require('@/assets/images/yeosu.png') },
-    { name: '용인', image: require('@/assets/images/yongin.png') },
+    { name: 'seoul', image: require('@/assets/images/seoul.png') },
+    { name: 'busan', image: require('@/assets/images/busan.png') },
+    { name: 'jeju', image: require('@/assets/images/jeju.png') },
+    { name: 'gyeongju', image: require('@/assets/images/gyeongju.png') },
+    { name: 'yeosu', image: require('@/assets/images/yeosu.png') },
+    { name: 'yongin', image: require('@/assets/images/yongin.png') },
   ];
 
   const tourImages = [
@@ -28,21 +27,13 @@ export default function Home() {
     { id: 2, image: require('@/assets/images/busan.png') },
   ];
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetX = event.nativeEvent.contentOffset.x;
-    const index = Math.round(offsetX / screenWidth);
-    setCurrentIndex(index);
-  };
-
-  const progress = useSharedValue<number>(0);
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
       <Header />
       <View style={{ flex: 1, paddingTop: 100 }}>
         <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
           <View style={{ padding: 20, alignItems: 'center' }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20 }}>이런 여행은 어떠세요?
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20 }}>How about this kind of trip?
               
             </Text>
               <Carousel
@@ -78,8 +69,9 @@ export default function Home() {
 
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 30, marginBottom: 20, width: '65%',borderBlockColor:"black"}}>
               <TextInput
-                placeholder="더 많은 곳을 검색해보세요!"
+                placeholder="Explore more places!"
                 style={{ borderWidth: 0.5, borderColor: '#ccc', borderRadius: 20, padding: 10, flex: 1, textAlign:"center"}}
+                placeholderTextColor="grey"
               />
             </View>
 
@@ -87,7 +79,7 @@ export default function Home() {
               {cities.map(({ name, image }) => (
                 <TouchableOpacity
                   key={name}
-                  onPress={() => router.push(`/auth/VerifyPhone`)}
+                  onPress={() => router.push(`/pages/CreatingPlan?city=${name}`)}
                   style={{
                     width: '30%',
                     backgroundColor: '#fff',
@@ -100,7 +92,7 @@ export default function Home() {
                   }}
                 >
                   <Image source={image} style={{ width: 80, height: 60, borderRadius: 5 }} />
-                  <Text style={{ marginTop: 5, fontSize: 12 }}>#{name}</Text>
+                  <Text style={{ marginTop: 5, fontSize: 12 }}># {name}</Text>
                 </TouchableOpacity>
               ))}
             </View>

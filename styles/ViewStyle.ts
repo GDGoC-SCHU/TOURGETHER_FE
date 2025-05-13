@@ -47,9 +47,10 @@ export const styles = StyleSheet.create({
     justifyContent:"space-evenly",
     marginRight: 5,
     textAlign: "center",
-    fontSize: 8,
+    fontSize: 6,
     fontWeight: "bold",
     color: "black",
+    marginTop:5,
   },
   headerContainer: {
   position: "absolute",
@@ -65,6 +66,7 @@ export const styles = StyleSheet.create({
 headerIcon: {
   width: 30,
   height: 30,
+  marginLeft:10
 },
 
 }); 

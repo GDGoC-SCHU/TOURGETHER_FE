@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useMemo,useCallback} from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   ScrollView,
   Platform,
+
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useRouter } from "expo-router";
@@ -26,24 +27,38 @@ export default function Register() {
 
   const router = useRouter();
 
-  const allTags = [
+  const allTags = useMemo(() => [
     "MBTI E",
     "MBTI I",
     "MBTI J",
     "MBTI P",
-    "카페 위주",
-    "맛집 위주",
-    "관광지 위주",
-    "액티비티 위주",
-    "호캉스",
-  ];
-
+    "Cafe",
+    "Food",
+    "SightSeeing",
+    "Activity",
+    "Staycation",
+  ], []);
   // 해시태그 선택/해제
-  const toggleTag = (tag: string) => {
-    setTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-  };
+  const toggleTag = useCallback((tag:string)=>{
+    setTags((prev)=>prev.includes(tag)?prev.filter((t)=>t!==tag): [...prev,tag]);
+  },[]);
+
+  const renderedTags = useMemo(()=>{
+    return allTags.map((tag)=>(
+      <TouchableOpacity
+        key={tag}
+        onPress={()=>toggleTag(tag)}
+        style={{
+          backgroundColor: tags.includes(tag)? "blue":"grey",
+          padding:5,
+          borderRadius:10,
+          margin:5,
+        }}
+        >
+          <Text style={{color: "white"}}>{tag}</Text>
+        </TouchableOpacity>
+    ));
+  },[tags,toggleTag]);
 
   // 프로필 사진 선택
   const pickImage = async () => {
@@ -62,10 +77,10 @@ export default function Register() {
       const res = await fetch("http://localhost:8080/api/user/nickname");
       const data = await res.json();
       if (data.available) {
-        alert("사용 가능한 닉네임입니다.");
+        alert("Nickname is available");
         setNickNameCheck(true);
       } else {
-        alert("이미 사용중인 닉네임입니다.");
+        alert("Nickname is already taken.");
         setNickNameCheck(false);
       }
     } catch (err) {
@@ -82,11 +97,11 @@ export default function Register() {
       tags?: string;
       gender?: string;
     } = {};
-    if (!nickNameCheck) newErrors.nickname = "닉네임 중복 확인을 해주세요.";
-    if (!nickName.trim()) newErrors.nickname = "닉네임을 입력해주세요.";
-    if (!bio.trim()) newErrors.bio = "자기소개를 입력해주세요.";
-    if (tags.length === 0) newErrors.tags = "하나 이상의 태그를 선택해주세요.";
-    if (!gender) newErrors.gender = "성별을 선택해주세요.";
+    if (!nickNameCheck) newErrors.nickname = "Please check for nickname duplication.";
+    if (!nickName.trim()) newErrors.nickname = "Please enter a nickname.";
+    if (!bio.trim()) newErrors.bio = "Please enter a short introduction.";
+    if (tags.length === 0) newErrors.tags = "Please select at least one hashtag.";
+    if (!gender) newErrors.gender = "Please select your gender.";
 
     const payLoad = {
       nickName,
@@ -106,11 +121,11 @@ export default function Register() {
         body: JSON.stringify(payLoad),
       });
       if (res.status === 200) {
-        alert("회원가입 성공");
+        alert("Sign-up successful");
         router.push("/auth/VerifyPhone");
       }
     } catch (err) {
-      alert("회원가입 실패");
+      alert("Sign-up failed");
     }
   };
 
@@ -130,17 +145,18 @@ export default function Register() {
           }}
         />
         <Text style={{ textAlign: "center", marginTop: 10 }}>
-          사용하실 프로필 사진을 설정해주세요
+          Please set your profile picture.
         </Text>
       </TouchableOpacity>
       <View style={{ marginTop: 20, marginLeft: 20, marginRight: 20 }}>
         <Text style={{ fontSize: 24, fontWeight: "bold", marginTop: 20 }}>
-          닉네임
+          Nickname
         </Text>
         <TextInput
           value={nickName}
           onChangeText={setNickName}
-          placeholder="사용하실 닉네임을 적어주세요"
+          placeholder=" Please Write down your Nickname"
+          placeholderTextColor="grey"
           maxLength={10}
           style={{
             borderWidth: 1,
@@ -148,21 +164,22 @@ export default function Register() {
             marginTop: 20,
             borderRadius: 5,
           }}
+          
         />
         <TouchableOpacity
           onPress={checkNickName}
           style={{
-            width: "20%",
+            width: "40%",
             marginTop: 10,
             padding: 2,
             backgroundColor: "green",
             borderRadius: 5,
           }}
         >
-          <Text style={{ textAlign: "center", color: "white" }}>중복확인</Text>
+          <Text style={{ textAlign: "center", color: "white" }}>Check Duplication</Text>
         </TouchableOpacity>
         <Text style={{ fontSize: 24, fontWeight: "bold", marginTop: 20 }}>
-          자기소개
+          Self-Introduction
         </Text>
         <TextInput
           value={bio}
@@ -175,30 +192,16 @@ export default function Register() {
             marginTop: 20,
             borderRadius: 5,
           }}
-          placeholder="자기소개를 적어주세요(최대 20자)"
+          placeholder=" Write a short introduction (Max 20 characters)"
+          placeholderTextColor="grey"
         />
         <Text style={{ fontSize: 24, fontWeight: "bold", marginTop: 20 }}>
-          # 설정
+          # Hashtag Settings
         </Text>
         <Text style={{ fontSize: 12 }}>
-          본인을 표현할 수 있는 # 선택해주세요(최대 5개)
+          Select hashtags that represent you (Max 5)
         </Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-          {allTags.map((tag) => (
-            <TouchableOpacity
-              key={tag}
-              onPress={() => toggleTag(tag)}
-              style={{
-                backgroundColor: tags.includes(tag) ? "blue" : "gray",
-                padding: 5,
-                borderRadius: 10,
-                margin: 5,
-              }}
-            >
-              <Text style={{ color: "white" }}>{tag}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <View style={{flexDirection:"row", flexWrap:"wrap"}}>{renderedTags}</View>
         <Text style={{ fontSize: 24, fontWeight: "bold", marginTop: 20 }}>
           성별
         </Text>
@@ -207,45 +210,40 @@ export default function Register() {
           onValueChange={setGender}
           style={{ marginTop: 20 }}
         >
-          <Picker.Item label="선택" value="" />
-          <Picker.Item label="남성" value="male" />
-          <Picker.Item label="여성" value="female" />
-          <Picker.Item label="기타" value="other" />
+          <Picker.Item label="Select" value="" />
+          <Picker.Item label="male" value="male" />
+          <Picker.Item label="female" value="female" />
+          <Picker.Item label="other" value="other" />
         </Picker>
 
-        <Text style={{ fontSize: 24, fontWeight: "bold", marginTop: 20 }}>
-          생년월일
-        </Text>
-
-        {Platform.OS === "web" ? (
-          <TextInput
-            style={{ borderWidth: 1, padding: 10, marginTop: 20 }}
-            value={birthDate.toISOString().split("T")[0]}
-            onChangeText={(text) => setBirthDate(new Date(text))}
-            placeholder="YYYY-MM-DD"
-          />
-        ) : (
-          <>
-            <TouchableOpacity
-              onPress={() => setShowDatePicker(true)}
-              style={{ borderBottomWidth: 1, paddingVertical: 10 }}
-            >
-              <Text>{birthDate.toISOString().split("T")[0]}</Text>
-            </TouchableOpacity>
-            {showDatePicker && (
-              <DateTimePicker
-                value={birthDate}
-                mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={(_, date) => {
-                  setShowDatePicker(false);
-                  if (date) setBirthDate(date);
-                }}
-              />
-            )}
-          </>
-        )}
-      </View>
+        <View>
+          <Text style={{ fontSize: 24, fontWeight: "bold", marginTop: 20 }}>
+            Birth
+          </Text>
+          {Platform.OS === "web" ? (
+            <input
+              type="date"
+              value={birthDate.toISOString().split("T")[0]}
+              onChange={(e) => setBirthDate(new Date(e.target.value))}
+              placeholder="YYYY-MM-DD"
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                padding: 10,
+                borderRadius: 5,
+                marginTop: 10,
+              }}
+            />
+          ) : (
+            <DateTimePicker
+              mode="date"
+              display="spinner"
+              value={birthDate}
+              onChange={(_, date) => date && setBirthDate(date)}
+            />
+          )}
+        </View>
+    </View>
       <TouchableOpacity
         onPress={submitProfile}
         style={{
@@ -258,7 +256,7 @@ export default function Register() {
         }}
       >
         <Text style={{ color: "white", textAlign: "center" }}>
-          회원가입 완료하기
+          Submit
         </Text>
       </TouchableOpacity>
     </ScrollView>

@@ -14,7 +14,7 @@ export default function VerifyPhone() {
 
   const verifyCode = async () => {
     if (code.trim().length === 0) {
-      Alert.alert("인증번호를 입력해주세요.");
+      Alert.alert("Please enter the verification code.");
       return;
     }
     setIsLoading(true);
@@ -26,12 +26,12 @@ export default function VerifyPhone() {
           params: { userId, code },
         }
       );
-      Alert.alert("인증 완료", res.data);
+      Alert.alert("Verification complete", res.data);
       router.replace("/");
     } catch (err: any) {
       Alert.alert(
-        "인증 실패",
-        err.response?.data || err.message || "오류 발생"
+        "Verificationi failed",
+        err.response?.data || err.message || "error"
       );
     } finally {
       setIsLoading(false);
@@ -40,7 +40,7 @@ export default function VerifyPhone() {
 
   const requestSms = async () => {
     if (phone.trim().length < 11) {
-      Alert.alert("정확한 전화번호를 입력해주세요.");
+      Alert.alert("Please enter a valid phone number.");
       return;
     }
     setIsLoading(true);
@@ -51,9 +51,9 @@ export default function VerifyPhone() {
         null,
         { params: { userId: userId } }
       );
-      Alert.alert("인증번호 전송", "인증번호가 전송되었습니다.");
+      Alert.alert("Send verification code", "The verification code has been sent.");
     } catch (err: any) {
-      Alert.alert("인증번호 전송 실패", err.response?.data || err.message);
+      Alert.alert(" Failed to send the verification code", err.response?.data || err.message);
     } finally {
       setIsLoading(false);
     }
@@ -63,35 +63,37 @@ export default function VerifyPhone() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.heading_container}>
-          <Text style={styles.heading}>전화번호 인증</Text>
+          <Text style={styles.heading}>Phone number verification</Text>
           <Text style={styles.description}>
-            회원가입을 완료하기 위해 전화번호 인증이 필요합니다.
+            Phone number verification is required to complete the sign-up process.
           </Text>
         </View>
         <View style={styles.input_container}>
           <View style={{ gap: 5, flex: 1 }}>
-            <Text style={styles.description}>전화번호</Text>
+            <Text style={styles.description}>Phone Number</Text>
             <TextInput
-              placeholder="전화번호를 입력하세요"
+              placeholder="Please enter your Phone Number"
               keyboardType="numeric"
             />
           </View>
           <View style={styles.horizontal_line} />
+          <View style={{alignItems:"center"}}>
           <ButtonContainer>
             <Button onPress={requestSms}>
-              <ButtonText>인증번호 전송</ButtonText>
+              <ButtonText>Send Verification Code</ButtonText>
             </Button>
           </ButtonContainer>
+          </View>
         </View>
       </View>
       <View style={styles.heading_container}>
-        <Text style={styles.heading}>인증번호 입력</Text>
+        <Text style={styles.heading}>Enter Verification Code</Text>
         <Text style={styles.description}>
-          입력한 전화번호로 전송된 인증번호를 입력해주세요.
+          Please enter the verification code sent to the phone number you provided.
         </Text>
         <View style={styles.input_container}>
           <TextInput
-            placeholder="인증번호를 입력하세요"
+            placeholder="Please enter the Verification Code"
             value={code}
             onChangeText={setCode}
             keyboardType="numeric"
@@ -102,7 +104,7 @@ export default function VerifyPhone() {
       <View style={styles.footer}>
         <ButtonContainer>
           <Button onPress={verifyCode}>
-            <ButtonText>인증하기</ButtonText>
+            <ButtonText>Verify</ButtonText>
           </Button>
         </ButtonContainer>
       </View>
