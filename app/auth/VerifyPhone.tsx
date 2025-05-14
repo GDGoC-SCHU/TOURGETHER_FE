@@ -11,13 +11,12 @@ import {
   Modal
 } from 'react-native';
 import {useRouter} from 'expo-router';
-import {AuthProvider, useAuth} from '@/context/authContext';
-import {AuthMiddlewareProvider} from '@/context/authMiddleware';
+import {useAuth} from '@/context/authContext';
 import {usePhoneAuth} from '@/app/hooks/usePhoneAuth';
 import {PHONE_VERIFICATION_ERRORS} from '@/app/utils/errorMessages';
 
-// 실제 전화번호 인증 컴포넌트
-function PhoneVerificationContent() {
+// 전화번호 인증 컴포넌트
+export default function VerifyPhoneScreen() {
   const {needPhoneVerification} = useAuth();
   const router = useRouter();
   const {
@@ -162,17 +161,6 @@ function PhoneVerificationContent() {
             </View>
         </Modal>
       </View>
-  );
-}
-
-// 메인 컴포넌트 - AuthProvider와 AuthMiddlewareProvider로 감싸서 내보내기
-export default function VerifyPhoneScreen() {
-  return (
-      <AuthProvider>
-        <AuthMiddlewareProvider>
-          <PhoneVerificationContent/>
-        </AuthMiddlewareProvider>
-      </AuthProvider>
   );
 }
 

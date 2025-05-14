@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Platform, StyleSheet, Text, View} from 'react-native';
 import {useRouter, useLocalSearchParams} from 'expo-router';
-import {AuthProvider, useAuth} from '@/context/authContext';
+import {useAuth} from '@/context/authContext';
 
-// 실제 콜백 로직을 처리하는 내부 컴포넌트
-function CallbackContent() {
+// 소셜 로그인 콜백 처리 컴포넌트
+export default function SocialCallback() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -16,7 +16,7 @@ function CallbackContent() {
 
   useEffect(() => {
     async function handleCallback() {
-      console.log('CallbackContent 컴포넌트 로드됨');
+      console.log('SocialCallback 컴포넌트 로드됨');
 
       if (Platform.OS !== 'web') {
         console.log('모바일 환경 감지, 홈으로 이동');
@@ -99,15 +99,6 @@ function CallbackContent() {
         <ActivityIndicator size="large" color="#3897f0"/>
         <Text style={styles.text}>인증이 완료되었습니다. 리다이렉트 중...</Text>
       </View>
-  );
-}
-
-// 메인 컴포넌트 - AuthProvider로 감싸서 내보내기
-export default function SocialCallback() {
-  return (
-      <AuthProvider>
-        <CallbackContent/>
-      </AuthProvider>
   );
 }
 
