@@ -1,193 +1,205 @@
-<<<<<<< HEAD
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
+import {Platform} from "react-native";
 
 // 백엔드 서버 URL 설정
 const BACKEND_URL = "http://localhost:8080";
 const KAKAO_AUTH_URL = `${BACKEND_URL}/oauth2/authorization/kakao`;
 
-=======
-<<<<<<< HEAD
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
+// 카카오 로그인 함수
+export async function signInWithKakao(): Promise<{
+  token: string;
+  refreshToken: string | undefined;
+  user: any
+}> {
+  console.log("카카오 로그인 시작");
 
-// 백엔드 서버 URL 설정
-const BACKEND_URL = 'http://localhost:8080';
-=======
-import * as WebBrowser from "expo-web-browser";
-import * as Linking from "expo-linking";
-
-// 백엔드 서버 URL 설정
-const BACKEND_URL = "http://localhost:8080";
->>>>>>> 7c5b914 ([feat] Verify-phone create)
-const KAKAO_AUTH_URL = `${BACKEND_URL}/oauth2/authorization/kakao`;
-
->>>>>>> 74bfab2492d0e9efe69162fea2687ea77d8afd8c
-interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  needPhoneVerification: boolean;
-  userId: number;
+  if (Platform.OS === 'web') {
+    // 웹 환경에서는 직접 리다이렉트 사용
+    return webKakaoLoginDirect();
+  } else {
+    // 네이티브 환경에서는 WebBrowser 사용
+    return nativeKakaoLogin();
+  }
 }
 
-// 카카오 인증 응답 처리 함수
-const handleKakaoAuthResponse = async (url: string): Promise<AuthResponse> => {
+// 웹 환경에서 현재 창에서 직접 리다이렉트 사용
+function webKakaoLoginDirect(): Promise<{
+  token: string;
+  refreshToken: string | undefined;
+  user: any
+}> {
   return new Promise((resolve, reject) => {
     try {
-      // JSON 응답 추출 로직
-      const jsonMatch = url.match(/{.*}/);
-      if (jsonMatch) {
-        const jsonStr = jsonMatch[0];
-        const authData = JSON.parse(jsonStr) as AuthResponse;
-        resolve(authData);
-      } else {
-        reject(new Error("JSON 데이터를 찾을 수 없습니다"));
+      console.log("직접 리다이렉트로 카카오 로그인 시작");
+
+      // 먼저 이미 URL에 토큰 정보가 있는지 확인
+      const urlParams = new URLSearchParams(window.location.search);
+      const accessToken = urlParams.get('accessToken');
+      const refreshToken = urlParams.get('refreshToken');
+      const userId = urlParams.get('userId');
+      const needPhoneVerification = urlParams.get('needPhoneVerification') === 'true';
+
+      // 이미 토큰 정보가 URL에 있다면 처리
+      if (accessToken && userId) {
+        console.log("URL에서 카카오 로그인 정보 감지됨", {
+          accessToken,
+          refreshToken,
+          userId,
+          needPhoneVerification
+        });
+
+        // URL에서 파라미터 제거 (깔끔한 URL 유지)
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+
+        // 로그인 성공 결과 반환
+        resolve({
+          token: accessToken,
+          refreshToken: refreshToken || undefined, // null을 undefined로 변환
+          user: {
+            id: parseInt(userId),
+            needPhoneVerification
+          }
+        });
+
+        return;
       }
+
+      // 토큰 정보가 없다면 로그인 페이지로 리다이렉트
+      // 현재 URL을 socialCallback 페이지로 설정
+      const callbackUrl = `${window.location.origin}/auth/socialCallback`;
+      console.log("콜백 URL:", callbackUrl);
+
+      // 리다이렉트 URL 구성 - 웹 환경용 특수 파라미터 추가
+      const redirectUrl = `${KAKAO_AUTH_URL}?web=true`;
+
+      console.log("카카오 인증 페이지로 리다이렉트:", redirectUrl);
+
+      // 현재 창에서 직접 리다이렉트
+      window.location.href = redirectUrl;
+
     } catch (error) {
+      console.error("웹 카카오 로그인 오류:", error);
       reject(error);
     }
   });
-};
+}
 
-// URL 리스너 설정
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-export const setupKakaoAuthListener = (callback: (response: AuthResponse) => void) => {
-  // URL 이벤트 핸들러
-  const handleUrl = async ({ url }: { url: string }) => {
-    if (url && url.includes('auth-callback')) {
-=======
->>>>>>> 74bfab2492d0e9efe69162fea2687ea77d8afd8c
-export const setupKakaoAuthListener = (
-  callback: (response: AuthResponse) => void
-) => {
-  // URL 이벤트 핸들러
-  const handleUrl = async ({ url }: { url: string }) => {
-    if (url && url.includes("auth-callback")) {
-<<<<<<< HEAD
-=======
->>>>>>> 7c5b914 ([feat] Verify-phone create)
->>>>>>> 74bfab2492d0e9efe69162fea2687ea77d8afd8c
-      try {
-        const authResponse = await handleKakaoAuthResponse(url);
-        callback(authResponse);
-      } catch (error) {
-        console.error("인증 응답 처리 오류:", error);
-      }
-    }
-  };
-
-  // 이벤트 리스너 등록
-<<<<<<< HEAD
-  const subscription = Linking.addEventListener("url", handleUrl);
-
-  // 앱이 이미 열려있고 URL로 실행된 경우 처리
-  Linking.getInitialURL().then((url: string | null) => {
-    if (url && url.includes("auth-callback")) {
-=======
-<<<<<<< HEAD
-  const subscription = Linking.addEventListener('url', handleUrl);
-
-  // 앱이 이미 열려있고 URL로 실행된 경우 처리
-  Linking.getInitialURL().then((url: string | null) => {
-    if (url && url.includes('auth-callback')) {
-=======
-  const subscription = Linking.addEventListener("url", handleUrl);
-
-  // 앱이 이미 열려있고 URL로 실행된 경우 처리
-  Linking.getInitialURL().then((url: string | null) => {
-    if (url && url.includes("auth-callback")) {
->>>>>>> 7c5b914 ([feat] Verify-phone create)
->>>>>>> 74bfab2492d0e9efe69162fea2687ea77d8afd8c
-      handleUrl({ url });
-    }
-  });
-
-  // 리스너 제거 함수 반환
-  return () => {
-    subscription.remove();
-  };
-};
-
-// 카카오 로그인 함수
-export async function signInWithKakao(): Promise<{ token: string; user: any }> {
-  // 앱으로 돌아올 콜백 URL 생성
-<<<<<<< HEAD
-  const redirectUrl = Linking.createURL("auth-callback");
-=======
-<<<<<<< HEAD
-  const redirectUrl = Linking.createURL('auth-callback');
-=======
-  const redirectUrl = Linking.createURL("auth-callback");
->>>>>>> 7c5b914 ([feat] Verify-phone create)
->>>>>>> 74bfab2492d0e9efe69162fea2687ea77d8afd8c
-
+// 네이티브 환경에서 카카오 로그인
+function nativeKakaoLogin(): Promise<{
+  token: string;
+  refreshToken: string | undefined;
+  user: any
+}> {
   return new Promise((resolve, reject) => {
-    // URL 리스너 설정
-    const removeListener = setupKakaoAuthListener((authResponse) => {
-      removeListener(); // 리스너 제거
-      resolve({
-        token: authResponse.accessToken,
-        user: {
-          id: authResponse.userId,
-<<<<<<< HEAD
-          needPhoneVerification: authResponse.needPhoneVerification,
-        },
-=======
-<<<<<<< HEAD
-          needPhoneVerification: authResponse.needPhoneVerification
+    // URL 이벤트 핸들러
+    const handleUrl = async ({url}: { url: string }) => {
+      console.log("URL 이벤트 받음:", url);
+
+      if (url && (url.includes("auth-callback") || url.includes("auth/VerifyPhone"))) {
+        try {
+          // 브라우저 세션 닫기 시도
+          try {
+            await WebBrowser.dismissAuthSession();
+          } catch (e) {
+            console.warn("브라우저 세션 닫기 오류:", e);
+          }
+
+          // URL 파라미터 추출
+          const urlObj = new URL(url);
+          const accessToken = urlObj.searchParams.get("accessToken");
+          const refreshToken = urlObj.searchParams.get("refreshToken");
+          const userId = urlObj.searchParams.get("userId");
+          const needPhoneVerification = urlObj.searchParams.get("needPhoneVerification");
+
+          if (!accessToken || !userId) {
+            throw new Error("인증 정보가 부족합니다");
+          }
+
+          // 로그인 데이터 반환
+          resolve({
+            token: accessToken,
+            refreshToken: refreshToken || undefined, // null을 undefined로 변환
+            user: {
+              id: parseInt(userId),
+              needPhoneVerification: needPhoneVerification === "true",
+            },
+          });
+        } catch (error) {
+          console.error("URL 처리 오류:", error);
+          reject(error);
+        } finally {
+          // 리스너 제거
+          subscription.remove();
         }
-=======
-          needPhoneVerification: authResponse.needPhoneVerification,
-        },
->>>>>>> 7c5b914 ([feat] Verify-phone create)
->>>>>>> 74bfab2492d0e9efe69162fea2687ea77d8afd8c
-      });
-    });
+      }
+    };
+
+    // URL 리스너 등록
+    const subscription = Linking.addEventListener("url", handleUrl);
+
+    // 네이티브 리다이렉트 URL
+    const redirectUrl = "tourgether://auth-callback";
+    console.log("네이티브 리다이렉트 URL:", redirectUrl);
 
     // 인증 세션 열기
     WebBrowser.openAuthSessionAsync(KAKAO_AUTH_URL, redirectUrl)
-<<<<<<< HEAD
-      .then((result) => {
-        if (result.type !== "success") {
-          removeListener(); // 리스너 제거
-          reject(new Error("카카오 인증이 취소되었거나 실패했습니다"));
-        }
-        // 성공 시 리스너에서 resolve 처리
-      })
-      .catch((error) => {
-        removeListener(); // 리스너 제거
-        reject(error);
-      });
-=======
-<<<<<<< HEAD
     .then((result) => {
-      if (result.type !== 'success') {
-        removeListener(); // 리스너 제거
-        reject(new Error('카카오 인증이 취소되었거나 실패했습니다'));
+      console.log("WebBrowser 결과:", result);
+
+      // 성공, dismiss 이외의 결과는 취소/실패로 처리
+      if (result.type !== "success" && result.type !== "dismiss") {
+        subscription.remove();
+        reject(new Error("카카오 인증이 취소되었거나 실패했습니다"));
       }
-      // 성공 시 리스너에서 resolve 처리
     })
     .catch((error) => {
-      removeListener(); // 리스너 제거
+      console.error("WebBrowser 오류:", error);
+      subscription.remove();
       reject(error);
     });
->>>>>>> 74bfab2492d0e9efe69162fea2687ea77d8afd8c
   });
 }
-=======
-      .then((result) => {
-        if (result.type !== "success") {
-          removeListener(); // 리스너 제거
-          reject(new Error("카카오 인증이 취소되었거나 실패했습니다"));
-        }
-        // 성공 시 리스너에서 resolve 처리
-      })
-      .catch((error) => {
-        removeListener(); // 리스너 제거
-        reject(error);
-      });
-  });
+
+// 로그인 콜백 처리 함수 (웹 환경 전용)
+export function handleKakaoLoginCallback(): {
+  token: string,
+  refreshToken: string | undefined,
+  user: any
+} | null {
+  if (Platform.OS !== 'web') return null;
+
+  // URL 파라미터에서 토큰 정보 확인
+  const urlParams = new URLSearchParams(window.location.search);
+  const accessToken = urlParams.get('accessToken');
+  const refreshToken = urlParams.get('refreshToken');
+  const userId = urlParams.get('userId');
+  const needPhoneVerification = urlParams.get('needPhoneVerification') === 'true';
+
+  if (accessToken && userId) {
+    console.log("URL에서 카카오 로그인 정보 감지됨");
+
+    // URL에서 파라미터 제거 (깔끔한 URL 유지)
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+
+    // 로그인 정보 반환
+    return {
+      token: accessToken,
+      refreshToken: refreshToken || undefined, // null을 undefined로 변환
+      user: {
+        id: parseInt(userId),
+        needPhoneVerification
+      }
+    };
+  }
+
+  return null;
 }
->>>>>>> 7c5b914 ([feat] Verify-phone create)
+
+// 라우팅을 위한 기본 내보내기 컴포넌트
+export default function KakaoLoginComponent() {
+  // 라우팅을 위한 빈 컴포넌트
+  return null;
+}
