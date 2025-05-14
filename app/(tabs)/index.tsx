@@ -1,6 +1,5 @@
-// app/(tabs)/index.tsx
 import React from 'react';
-import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {ScrollView, StyleSheet, Text, TouchableOpacity, View, Platform} from 'react-native';
 import {useRouter} from 'expo-router';
 import {AuthProvider, useAuth} from '@/context/authContext'; // 경로 확인 필요
 
@@ -11,8 +10,20 @@ function TabContent() {
 
   const handleLogout = async () => {
     try {
+      console.log('로그아웃 시작...');
       await logout();
-      router.replace('/');
+      console.log('로그아웃 완료, 화면 전환 준비...');
+      
+      // 약간의 지연을 주어 상태가 완전히 업데이트되도록 함
+      setTimeout(() => {
+        // 웹 환경에서는 직접 로그인 페이지로 이동
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.location.href = '/auth/LoginScreen';
+        } else {
+          // 모바일 환경에서는 router 사용
+          router.replace('/auth/LoginScreen');
+        }
+      }, 300);
     } catch (error) {
       console.error('로그아웃 오류:', error);
     }

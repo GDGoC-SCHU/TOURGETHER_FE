@@ -7,11 +7,14 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Modal
 } from 'react-native';
 import {useRouter} from 'expo-router';
 import {AuthProvider, useAuth} from '@/context/authContext';
+import {AuthMiddlewareProvider} from '@/context/authMiddleware';
 import {usePhoneAuth} from '@/app/hooks/usePhoneAuth';
+import {PHONE_VERIFICATION_ERRORS} from '@/app/utils/errorMessages';
 
 // 실제 전화번호 인증 컴포넌트
 function PhoneVerificationContent() {
@@ -26,32 +29,55 @@ function PhoneVerificationContent() {
     isCodeSent,
     message,
     sendVerificationCode,
-    verifyCode
+    verifyCode,
+    resendVerificationCode
   } = usePhoneAuth();
 
   // 전화번호 인증 완료 후 처리
   const handleVerifyComplete = async () => {
     const success = await verifyCode();
     if (success) {
-      // 성공 메시지 표시 후 홈 화면으로 이동
+      // 성공 메시지 표시
       Alert.alert(
           "인증 완료",
           "전화번호 인증이 성공적으로 완료되었습니다.",
           [
             {
               text: "확인",
-              onPress: () => router.replace("/")
+              onPress: () => {
+                console.log("인증 완료 알림 확인 버튼 클릭");
+                // 직접 탭 홈으로 이동
+                if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                  console.log("웹 환경에서 직접 URL 변경");
+                  window.location.href = '/(tabs)';
+                } else {
+                  console.log("모바일 환경에서 router.replace 호출");
+                  router.replace('/(tabs)');
+                }
+              }
             }
           ]
       );
     }
   };
 
-  // 이미 인증된 경우 홈 화면으로 리다이렉트
-  if (!needPhoneVerification) {
-    router.replace('/');
-    return null;
-  }
+  // 인증 코드 재전송 처리
+  const handleResendCode = async () => {
+    await resendVerificationCode();
+  };
+
+  // 이미 인증된 경우 미들웨어가 자동으로 리다이렉트 처리
+
+  // 로딩 메시지 결정
+  const getLoadingMessage = () => {
+    if (!isLoading) return "";
+    
+    if (!isCodeSent) {
+      return PHONE_VERIFICATION_ERRORS.SUCCESS.SENDING;
+    } else {
+      return PHONE_VERIFICATION_ERRORS.SUCCESS.VERIFYING;
+    }
+  };
 
   return (
       <View style={styles.container}>
@@ -68,16 +94,16 @@ function PhoneVerificationContent() {
               keyboardType="phone-pad"
               value={phone}
               onChangeText={setPhone}
-              editable={!isCodeSent || isLoading}
+              editable={!isLoading}
           />
 
           <TouchableOpacity
               style={[
                 styles.button,
-                (isCodeSent && !isLoading) && styles.buttonDisabled
+                isLoading && styles.buttonDisabled
               ]}
-              onPress={sendVerificationCode}
-              disabled={isCodeSent && !isLoading}
+              onPress={isCodeSent ? handleResendCode : sendVerificationCode}
+              disabled={isLoading}
           >
             <Text style={styles.buttonText}>
               {isCodeSent ? "재전송" : "인증번호 받기"}
@@ -117,23 +143,35 @@ function PhoneVerificationContent() {
             </Text>
         ) : null}
 
-        {isLoading && (
-            <ActivityIndicator size="large" color="#3897f0" style={styles.loader}/>
-        )}
-
         {/* 웹 환경에서만 보이는 reCAPTCHA 컨테이너 */}
         {Platform.OS === 'web' && (
             <View nativeID="recaptcha-container" style={styles.recaptchaContainer}/>
         )}
+
+        {/* 로딩 모달 */}
+        <Modal
+            transparent={true}
+            visible={isLoading}
+            animationType="fade"
+        >
+            <View style={styles.modalBackground}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#3897f0" />
+                    <Text style={styles.loadingText}>{getLoadingMessage()}</Text>
+                </View>
+            </View>
+        </Modal>
       </View>
   );
 }
 
-// 메인 컴포넌트 - AuthProvider로 감싸서 내보내기
+// 메인 컴포넌트 - AuthProvider와 AuthMiddlewareProvider로 감싸서 내보내기
 export default function VerifyPhoneScreen() {
   return (
       <AuthProvider>
-        <PhoneVerificationContent/>
+        <AuthMiddlewareProvider>
+          <PhoneVerificationContent/>
+        </AuthMiddlewareProvider>
       </AuthProvider>
   );
 }
@@ -219,5 +257,31 @@ const styles = StyleSheet.create({
     height: 1,
     width: 1,
     opacity: 0.01,
+  },
+  // 로딩 모달 스타일
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingContainer: {
+    backgroundColor: 'white',
+    padding: 25,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    minWidth: 250,
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
   }
 });

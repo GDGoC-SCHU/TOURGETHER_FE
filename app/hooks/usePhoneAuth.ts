@@ -6,6 +6,8 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import {firebaseConfig} from '@/app/config/firebase';
 import {API_URL} from '@/app/config/api';
+import {useRouter} from 'expo-router';
+import {PHONE_VERIFICATION_ERRORS, getPhoneVerificationErrorMessage} from '@/app/utils/errorMessages';
 
 // Firebase 초기화
 if (!firebase.apps.length) {
@@ -36,7 +38,8 @@ export function usePhoneAuth() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isCodeSent, setIsCodeSent] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
-  const {userId, getAuthHeader} = useAuth();
+  const {userId, getAuthHeader, checkAuthStatus} = useAuth();
+  const router = useRouter();
 
   // Web reCAPTCHA
   const recaptchaVerifier = useRef<firebase.auth.RecaptchaVerifier | null>(null);
@@ -146,12 +149,12 @@ export function usePhoneAuth() {
   // 인증 코드 발송
   const sendVerificationCode = async () => {
     if (!phone) {
-      setMessage("전화번호를 입력해주세요.");
+      setMessage(PHONE_VERIFICATION_ERRORS.SEND.EMPTY_PHONE);
       return;
     }
 
     setIsLoading(true);
-    setMessage("인증 코드를 발송 중입니다...");
+    setMessage(PHONE_VERIFICATION_ERRORS.SUCCESS.SENDING);
 
     try {
       const formattedPhone = formatPhoneNumber(phone);
@@ -159,18 +162,35 @@ export function usePhoneAuth() {
 
       // 백엔드에 요청하여 Firebase를 통해 인증 코드 발송
       try {
-        const authHeader = await getAuthHeader();
-        const response = await axios.post(
-            `${API_URL}/api/phone/sendVerification`,
-            {phoneNumber: formattedPhone},
-            authHeader
-        );
-
-        if (response.data.success) {
-          setIsCodeSent(true);
-          setMessage("인증 코드가 발송되었습니다. 몇 분 내로 도착합니다.");
+        if (Platform.OS === 'web') {
+          // 웹 환경에서는 withCredentials 옵션 사용
+          const response = await axios.post(
+              `${API_URL}/api/phone/sendVerification`,
+              {phoneNumber: formattedPhone},
+              { withCredentials: true }
+          );
+          
+          if (response.data.success) {
+            setIsCodeSent(true);
+            setMessage(PHONE_VERIFICATION_ERRORS.SUCCESS.CODE_SENT);
+          } else {
+            throw new Error(response.data.message || PHONE_VERIFICATION_ERRORS.SEND.DEFAULT);
+          }
         } else {
-          throw new Error(response.data.message || "인증 코드 발송에 실패했습니다.");
+          // 모바일 환경에서는 기존 방식 사용
+          const authHeader = await getAuthHeader();
+          const response = await axios.post(
+              `${API_URL}/api/phone/sendVerification`,
+              {phoneNumber: formattedPhone},
+              authHeader
+          );
+
+          if (response.data.success) {
+            setIsCodeSent(true);
+            setMessage(PHONE_VERIFICATION_ERRORS.SUCCESS.CODE_SENT);
+          } else {
+            throw new Error(response.data.message || PHONE_VERIFICATION_ERRORS.SEND.DEFAULT);
+          }
         }
       } catch (error) {
         console.error("백엔드 인증 코드 발송 오류:", error);
@@ -178,7 +198,10 @@ export function usePhoneAuth() {
       }
     } catch (error: any) {
       console.error("인증 코드 발송 오류:", error);
-      setMessage(`인증 코드 발송 실패: ${error.message || "알 수 없는 오류가 발생했습니다."}`);
+      
+      // 오류 메시지를 사용자 친화적으로 변환
+      const userFriendlyMessage = getPhoneVerificationErrorMessage('SEND', error.message);
+      setMessage(userFriendlyMessage);
       setIsCodeSent(false);
     } finally {
       setIsLoading(false);
@@ -188,62 +211,152 @@ export function usePhoneAuth() {
   // 인증 코드 확인
   const verifyCode = async () => {
     if (!code) {
-      setMessage("인증 코드를 입력해주세요.");
+      setMessage(PHONE_VERIFICATION_ERRORS.VERIFY.EMPTY_CODE);
       return false;
     }
 
     setIsLoading(true);
-    setMessage("인증 코드를 확인 중입니다...");
+    setMessage(PHONE_VERIFICATION_ERRORS.SUCCESS.VERIFYING);
 
     try {
       // 백엔드에 요청하여 인증 코드 확인
       try {
-        const authHeader = await getAuthHeader();
-        const response = await axios.post(
-            `${API_URL}/api/phone/verifyCode`,
-            {
-              phoneNumber: formatPhoneNumber(phone),
-              code: code
-            },
-            authHeader
-        );
+        if (Platform.OS === 'web') {
+          // 웹 환경에서는 withCredentials 옵션 사용
+          const response = await axios.post(
+              `${API_URL}/api/phone/verifyCode`,
+              {
+                phoneNumber: formatPhoneNumber(phone),
+                code: code
+              },
+              { withCredentials: true }
+          );
 
-        if (!response.data.success) {
-          throw new Error(response.data.message || "인증 코드 확인에 실패했습니다.");
+          if (!response.data.success) {
+            throw new Error(response.data.message || PHONE_VERIFICATION_ERRORS.VERIFY.DEFAULT);
+          }
+          
+          // 인증 코드 확인 성공 후 사용자 상태 업데이트
+          console.log("인증 코드 확인 성공, 사용자 상태 업데이트 시작");
+          await updatePhoneVerificationStatus();
+          
+          // 인증 상태 갱신
+          await checkAuthStatus();
+          
+          setMessage(PHONE_VERIFICATION_ERRORS.SUCCESS.VERIFIED);
+          
+          // 직접 탭 홈으로 이동
+          console.log("탭 홈으로 직접 이동 시도");
+          if (typeof window !== 'undefined') {
+            setTimeout(() => {
+              console.log("웹 환경에서 직접 URL 변경");
+              window.location.href = '/(tabs)';
+            }, 500);
+          }
+          
+          return true;
+        } else {
+          // 모바일 환경에서는 기존 방식 사용
+          const authHeader = await getAuthHeader();
+          const response = await axios.post(
+              `${API_URL}/api/phone/verifyCode`,
+              {
+                phoneNumber: formatPhoneNumber(phone),
+                code: code
+              },
+              authHeader
+          );
+
+          if (!response.data.success) {
+            throw new Error(response.data.message || PHONE_VERIFICATION_ERRORS.VERIFY.DEFAULT);
+          }
+          
+          // 인증 코드 확인 성공 후 사용자 상태 업데이트
+          console.log("인증 코드 확인 성공, 사용자 상태 업데이트 시작");
+          await updatePhoneVerificationStatus();
+          
+          // 인증 상태 갱신
+          await checkAuthStatus();
+          
+          setMessage(PHONE_VERIFICATION_ERRORS.SUCCESS.VERIFIED);
+          
+          // 직접 탭 홈으로 이동
+          console.log("탭 홈으로 직접 이동 시도");
+          setTimeout(() => {
+            console.log("모바일 환경에서 router.replace 호출");
+            router.replace('/(tabs)');
+          }, 500);
+          
+          return true;
         }
-        
-        setMessage("전화번호 인증이 완료되었습니다!");
-        return true;
       } catch (error: any) {
         console.error("백엔드 인증 코드 확인 오류:", error);
-        setMessage(`인증 코드 확인 실패: ${error.message || "알 수 없는 오류가 발생했습니다."}`);
+        
+        // 오류 메시지를 사용자 친화적으로 변환
+        const userFriendlyMessage = getPhoneVerificationErrorMessage('VERIFY', error.message);
+        setMessage(userFriendlyMessage);
+        
+        // 특정 오류의 경우 코드 입력란 초기화
+        if (error.message.toLowerCase().includes('invalid code') || 
+            error.message.toLowerCase().includes('code is incorrect') ||
+            error.message.toLowerCase().includes('expired')) {
+          setCode("");
+        }
+        
         return false;
       }
     } catch (error: any) {
       console.error("인증 코드 확인 오류:", error);
-      setMessage(`인증 코드 확인 실패: ${error.message || "알 수 없는 오류가 발생했습니다."}`);
+      setMessage(PHONE_VERIFICATION_ERRORS.VERIFY.GENERAL_ERROR);
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
+  // 인증 코드 재전송 함수
+  const resendVerificationCode = async () => {
+    // 기존 코드 초기화
+    setCode("");
+    // 코드 전송 상태 초기화
+    setIsCodeSent(false);
+    // 인증 코드 발송 함수 호출
+    await sendVerificationCode();
+  };
+
   // 백엔드에 전화번호 인증 상태 업데이트
   const updatePhoneVerificationStatus = async () => {
     try {
       if (!userId) {
-        throw new Error("사용자 ID가 없습니다. 로그인이 필요합니다.");
+        console.error("사용자 ID가 없습니다. 현재 userId:", userId);
+        throw new Error(PHONE_VERIFICATION_ERRORS.UPDATE.NO_USER_ID);
       }
 
-      const authHeader = await getAuthHeader();
-      const response = await axios.post(
-          `${API_URL}/api/users/${userId}/verifyPhone`,
-          {phoneNumber: formatPhoneNumber(phone)},
-          authHeader
-      );
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || "전화번호 인증 상태 업데이트에 실패했습니다.");
+      console.log("전화번호 인증 상태 업데이트 시도 - userId:", userId);
+      
+      // 웹 환경에서는 withCredentials 옵션을 사용하여 쿠키 전송
+      if (Platform.OS === 'web') {
+        const response = await axios.post(
+            `${API_URL}/api/users/${userId}/verifyPhone`,
+            {phoneNumber: formatPhoneNumber(phone)},
+            { withCredentials: true }
+        );
+        
+        if (!response.data.success) {
+          throw new Error(response.data.message || PHONE_VERIFICATION_ERRORS.UPDATE.DEFAULT);
+        }
+      } else {
+        // 모바일 환경에서는 기존 방식 사용
+        const authHeader = await getAuthHeader();
+        const response = await axios.post(
+            `${API_URL}/api/users/${userId}/verifyPhone`,
+            {phoneNumber: formatPhoneNumber(phone)},
+            authHeader
+        );
+        
+        if (!response.data.success) {
+          throw new Error(response.data.message || PHONE_VERIFICATION_ERRORS.UPDATE.DEFAULT);
+        }
       }
 
       console.log("전화번호 인증 상태 업데이트 성공");
@@ -263,7 +376,9 @@ export function usePhoneAuth() {
     isCodeSent,
     message,
     sendVerificationCode,
-    verifyCode
+    verifyCode,
+    resendVerificationCode,
+    checkAuthStatus
   };
 }
 

@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Platform, StyleSheet, Text, View} from 'react-native';
-import {useRouter} from 'expo-router';
+import {useRouter, useLocalSearchParams} from 'expo-router';
 import {AuthProvider, useAuth} from '@/context/authContext';
 
 // 실제 콜백 로직을 처리하는 내부 컴포넌트
@@ -8,7 +8,11 @@ function CallbackContent() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const {login} = useAuth();
+  const {checkAuthStatus, isAuthenticated, needPhoneVerification} = useAuth();
+  const params = useLocalSearchParams<{
+    userId?: string;
+    needPhoneVerification?: string;
+  }>();
 
   useEffect(() => {
     async function handleCallback() {
@@ -21,51 +25,48 @@ function CallbackContent() {
       }
 
       try {
-        // URL 쿼리 파라미터에서 토큰 정보 가져오기
-        const urlParams = new URLSearchParams(window.location.search);
-        const accessToken = urlParams.get('accessToken');
-        const refreshToken = urlParams.get('refreshToken');
-        const userId = urlParams.get('userId');
-        const needPhoneVerification = urlParams.get('needPhoneVerification') === 'true';
-
-        console.log('소셜 로그인 콜백 정보 확인:', {
-          accessToken: accessToken ? '토큰 존재' : '토큰 없음',
-          userId,
-          needPhoneVerification
-        });
-
-        // 토큰 정보 유효성 검사
-        if (!accessToken || !userId) {
-          throw new Error('인증 정보가 누락되었습니다.');
-        }
-
-        // 로그인 처리 (토큰 저장)
-        console.log('로그인 시도 중...');
-        await login({
-          accessToken,
-          refreshToken: refreshToken || undefined,
-          userId,
-          needPhoneVerification
-        });
-        console.log('로그인 성공');
-
+        // 서버에 인증 상태 확인 요청 (쿠키 기반)
+        await checkAuthStatus();
+        
+        console.log('인증 상태 확인 완료:', { isAuthenticated, needPhoneVerification });
+        
         // URL에서 쿼리 파라미터 제거 (보안)
-        const cleanUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState({}, document.title, cleanUrl);
-
-        // 적절한 페이지로 리다이렉트
-        console.log('리다이렉트 시작', needPhoneVerification ? 'VerifyPhone으로' : '홈으로');
-
-        setTimeout(() => {
+        // SSR 환경에서는 window 객체가 없으므로 조건부 처리
+        if (typeof window !== 'undefined' && window.location) {
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
+        
+        // 인증 상태에 따라 적절한 화면으로 이동
+        if (isAuthenticated) {
           if (needPhoneVerification) {
-            router.push('/auth/VerifyPhone');
+            router.replace('/auth/VerifyPhone');
           } else {
-            router.push('/');
+            router.replace('/(tabs)');
           }
-        }, 100);
+        } else {
+          // URL 파라미터 확인 (OAuth2SuccessHandler에서 추가된 경우)
+          if (params.userId) {
+            // 전화번호 인증이 필요한지 확인
+            if (params.needPhoneVerification === 'true') {
+              router.replace('/auth/VerifyPhone');
+            } else {
+              router.replace('/(tabs)');
+            }
+          } else {
+            // 인증 실패 시 로그인 페이지로
+            setError('인증에 실패했습니다. 다시 로그인해주세요.');
+            setTimeout(() => {
+              router.replace('/auth/LoginScreen');
+            }, 2000);
+          }
+        }
       } catch (err) {
         console.error('소셜 로그인 콜백 처리 오류:', err);
-        setError(err instanceof Error ? err.message : '인증 정보 처리 중 오류가 발생했습니다.');
+        setError('인증 정보 처리 중 오류가 발생했습니다.');
+        setTimeout(() => {
+          router.replace('/auth/LoginScreen');
+        }, 2000);
       } finally {
         setLoading(false);
       }

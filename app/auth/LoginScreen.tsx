@@ -5,86 +5,56 @@ import {styles} from "@/styles/ViewStyle";
 import {ButtonContainer} from "@/styles/Button";
 import {useEffect, useState} from "react";
 import {useAuth} from "@/context/authContext";
-import {handleKakaoLoginCallback, signInWithKakao} from "./KakaoLogin";
+import {API_URL} from "@/app/config/api";
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const {login} = useAuth();
+  const {checkAuthStatus} = useAuth();
 
   // 웹 환경에서 URL 파라미터 확인 (리다이렉트 후 토큰 확인)
   useEffect(() => {
+    // 웹 환경에서는 서버 인증 상태 확인으로 대체
     if (Platform.OS === 'web') {
-      const loginData = handleKakaoLoginCallback();
-      if (loginData) {
-        handleLoginSuccess(loginData.token, loginData.refreshToken, loginData.user);
-      }
+      checkAuthStatus();
     }
   }, []);
 
-  // 로그인 성공 처리
-  const handleLoginSuccess = async (token: string, refreshToken: string | undefined, user: any) => {
-    console.log("로그인 성공:", token, refreshToken, user);
-
-    try {
-      // 인증 컨텍스트를 통해 로그인 처리
-      await login({
-        accessToken: token,
-        refreshToken,
-        userId: user.id.toString(),
-        needPhoneVerification: user.needPhoneVerification
-      });
-
-      // 전화번호 인증이 필요한 경우
-      if (user.needPhoneVerification) {
-        router.replace("/auth/VerifyPhone");
-      } else {
-        router.replace("/");
-      }
-    } catch (error) {
-      console.error("로그인 후처리 오류:", error);
-      Alert.alert("오류", "로그인 정보 저장 중 오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleKakaoLogin = async () => {
+  // 소셜 로그인 시작 함수
+  const startSocialLogin = async (provider: 'google' | 'kakao' | 'naver') => {
     if (isLoading) return;
 
     setIsLoading(true);
-    console.log("카카오 로그인 시작");
+    console.log(`${provider} 로그인 시작`);
 
     try {
-      const {token, refreshToken, user} = await signInWithKakao();
-      handleLoginSuccess(token, refreshToken, user);
-    } catch (error: any) {
-      console.error("카카오 로그인 오류:", error);
-      setIsLoading(false);
-      Alert.alert(
-          "로그인 실패",
-          error.message || "로그인 중 오류가 발생했습니다. 다시 시도해주세요."
-      );
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    if (isLoading) return;
-
-    setIsLoading(true);
-    console.log("구글 로그인 시작");
-
-    try {
-      // 구글 로그인 엔드포인트로 리다이렉트
       if (Platform.OS === 'web') {
-        window.location.href = 'http://localhost:8080/oauth2/authorization/google?web=true';
+        // 웹 환경에서 직접 리다이렉트 (쿠키 기반 인증)
+        if (typeof window !== 'undefined') {
+          window.location.href = `${API_URL}/oauth2/authorization/${provider}?web=true`;
+        }
       } else {
-        // 모바일 구현
-        Alert.alert("알림", "모바일 환경에서는 아직 구글 로그인이 지원되지 않습니다.");
+        // 모바일 환경에서 웹브라우저로 인증 페이지 열기
+        const redirectUrl = Linking.createURL('/auth/socialCallBack');
+        const authUrl = `${API_URL}/oauth2/authorization/${provider}`;
+        
+        // WebBrowser로 인증 페이지 열기
+        const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+        
+        if (result.type === 'success') {
+          // 인증 성공 시 상태 확인
+          await checkAuthStatus();
+          
+          // 인증 상태 변경 후 미들웨어가 적절한 페이지로 자동 리다이렉션
+          router.replace('/');
+        } else {
         setIsLoading(false);
+        }
       }
     } catch (error) {
-      console.error("구글 로그인 오류:", error);
+      console.error(`${provider} 로그인 오류:`, error);
       setIsLoading(false);
       Alert.alert(
           "로그인 실패",
@@ -92,6 +62,9 @@ export default function LoginScreen() {
       );
     }
   };
+
+  const handleKakaoLogin = () => startSocialLogin('kakao');
+  const handleGoogleLogin = () => startSocialLogin('google');
 
   return (
       <View style={styles.container}>

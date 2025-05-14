@@ -1,6 +1,5 @@
 import {Image} from "react-native";
 import {useRouter} from "expo-router";
-import {useEffect} from "react";
 import {AuthProvider, useAuth} from "@/context/authContext";
 import EditScreenInfo from "@/components/EditScreenInfo";
 import {Text, View} from "@/components/Themed";
@@ -10,27 +9,15 @@ import {styles} from "@/styles/ViewStyle";
 // 인증 확인 및 리다이렉트를 처리하는 내부 컴포넌트
 function IndexContent() {
   const router = useRouter();
-  const {isAuthenticated, needPhoneVerification} = useAuth();
+  const {isAuthenticated} = useAuth();
 
-  // 인증 상태에 따라 리다이렉트 수행
-  useEffect(() => {
-    // setTimeout으로 지연시켜 Root Layout이 마운트된 후 리다이렉트 실행
-    const timer = setTimeout(() => {
-      if (isAuthenticated) {
-        if (needPhoneVerification) {
-          router.replace('/auth/VerifyPhone');
-        }
-      }
-    }, 100); // 100ms 지연
-
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, needPhoneVerification, router]);
+  // 인증 상태는 layouts/_layout.tsx에서 처리하므로 여기서는 제거
 
   const LoginhandlePress = () => {
     router.push("/auth/LoginScreen");
   };
 
-  // 인증된 사용자는 useEffect에서 리다이렉트되므로 여기서는 비인증 사용자용 UI만 표시
+  // 인증된 사용자는 미들웨어에서 리다이렉트되므로 여기서는 비인증 사용자용 UI만 표시
   return (
       <View style={styles.container}>
         <Image
