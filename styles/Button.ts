@@ -15,4 +15,5 @@ export const ButtonText = styled.Text`
 export const ButtonContainer = styled.View`
   display: flex;
   margin: 10px;
+  
 `;
