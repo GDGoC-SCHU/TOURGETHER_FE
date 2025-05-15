@@ -1,7 +1,13 @@
 import React from 'react';
+import { View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useAuth } from '@/context/authContext';
+import { Feather, MaterialIcons, MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 
+/**
+ * 탭 네비게이션 레이아웃 컴포넌트
+ * 앱의 주요 탭 화면들을 관리합니다.
+ */
 function TabsLayout() {
   const { isAuthenticated, needPhoneVerification, loading } = useAuth();
 
@@ -17,16 +23,49 @@ function TabsLayout() {
       tabBarStyle: { 
         backgroundColor: '#fff',
         borderTopColor: '#eee',
+        borderTopWidth: 1,
+        height: 60,
       },
       tabBarActiveTintColor: '#3897f0',
       tabBarInactiveTintColor: '#888',
+      tabBarLabelStyle: {
+        fontSize: 10,
+        marginBottom: 5,
+      }
     }}>
       <Tabs.Screen
         name="index"
         options={{
           title: '홈',
           tabBarIcon: ({ color }) => (
-            <TabBarIcon name="home" color={color} />
+            <Feather name="home" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="board"
+        options={{
+          title: '게시판',
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="chat-bubble-outline" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: '채팅',
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="chat-outline" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="mypage"
+        options={{
+          title: '마이페이지',
+          tabBarIcon: ({ color }) => (
+            <FontAwesome name="user-circle-o" size={24} color={color} />
           ),
         }}
       />
@@ -34,14 +73,9 @@ function TabsLayout() {
   );
 }
 
-// 간단한 아이콘 컴포넌트
-function TabBarIcon({ name, color }: { name: string; color: string }) {
-  // 실제 앱에서는 아이콘 라이브러리를 사용하세요
-  return (
-    <div style={{ width: 24, height: 24, backgroundColor: color, borderRadius: 12 }} />
-  );
-}
-
+/**
+ * 탭 레이아웃 래퍼 컴포넌트
+ */
 export default function TabsLayoutWrapper() {
   return (
     <TabsLayout />

@@ -8,11 +8,18 @@ import {useAuth} from "@/context/authContext";
 import {API_URL} from "@/app/config/api";
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import { signInWithKakao } from "./KakaoLogin";
+import { signInWithGoogle } from "./GoogleLogin";
 
+/**
+ * 로그인 화면 컴포넌트
+ * 소셜 로그인 옵션을 제공합니다.
+ */
 export default function LoginScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const {checkAuthStatus} = useAuth();
+  const [provider, setProvider] = useState<string | null>(null);
 
   // 웹 환경에서 URL 파라미터 확인 (리다이렉트 후 토큰 확인)
   useEffect(() => {
@@ -22,49 +29,79 @@ export default function LoginScreen() {
     }
   }, []);
 
-  // 소셜 로그인 시작 함수
-  const startSocialLogin = async (provider: 'google' | 'kakao' | 'naver') => {
+  // 카카오 로그인 처리
+  const handleKakaoLogin = async () => {
     if (isLoading) return;
-
+    
     setIsLoading(true);
-    console.log(`${provider} 로그인 시작`);
-
+    setProvider('kakao');
+    console.log("카카오 로그인 시작");
+    
     try {
       if (Platform.OS === 'web') {
-        // 웹 환경에서 직접 리다이렉트 (쿠키 기반 인증)
-        if (typeof window !== 'undefined') {
-          window.location.href = `${API_URL}/oauth2/authorization/${provider}?web=true`;
-        }
+        // 웹 환경에서는 직접 리다이렉트
+        await signInWithKakao();
       } else {
-        // 모바일 환경에서 웹브라우저로 인증 페이지 열기
-        const redirectUrl = Linking.createURL('/auth/socialCallBack');
-        const authUrl = `${API_URL}/oauth2/authorization/${provider}`;
+        // 모바일 환경에서는 signInWithKakao 함수 사용
+        const result = await signInWithKakao();
+        console.log("카카오 로그인 결과:", result);
         
-        // WebBrowser로 인증 페이지 열기
-        const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+        // 인증 상태 확인
+        await checkAuthStatus();
         
-        if (result.type === 'success') {
-          // 인증 성공 시 상태 확인
-          await checkAuthStatus();
-          
-          // 인증 상태 변경 후 미들웨어가 적절한 페이지로 자동 리다이렉션
-          router.replace('/');
-        } else {
-        setIsLoading(false);
-        }
+        // 인증 상태 변경 후 미들웨어가 적절한 페이지로 자동 리다이렉션
+        router.replace('/');
       }
     } catch (error) {
-      console.error(`${provider} 로그인 오류:`, error);
+      console.error("카카오 로그인 오류:", error);
       setIsLoading(false);
       Alert.alert(
-          "로그인 실패",
-          "로그인 중 오류가 발생했습니다. 다시 시도해주세요."
+        "로그인 실패",
+        "카카오 로그인 중 오류가 발생했습니다. 다시 시도해주세요."
       );
+    } finally {
+      if (Platform.OS !== 'web') {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleKakaoLogin = () => startSocialLogin('kakao');
-  const handleGoogleLogin = () => startSocialLogin('google');
+  // 구글 로그인 처리
+  const handleGoogleLogin = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    setProvider('google');
+    console.log("구글 로그인 시작");
+    
+    try {
+      if (Platform.OS === 'web') {
+        // 웹 환경에서는 직접 리다이렉트
+        await signInWithGoogle();
+      } else {
+        // 모바일 환경에서는 signInWithGoogle 함수 사용
+        const result = await signInWithGoogle();
+        console.log("구글 로그인 결과:", result);
+        
+        // 인증 상태 확인
+        await checkAuthStatus();
+        
+        // 인증 상태 변경 후 미들웨어가 적절한 페이지로 자동 리다이렉션
+        router.replace('/');
+      }
+    } catch (error) {
+      console.error("구글 로그인 오류:", error);
+      setIsLoading(false);
+      Alert.alert(
+        "로그인 실패",
+        "구글 로그인 중 오류가 발생했습니다. 다시 시도해주세요."
+      );
+    } finally {
+      if (Platform.OS !== 'web') {
+        setIsLoading(false);
+      }
+    }
+  };
 
   return (
       <View style={styles.container}>
@@ -83,7 +120,7 @@ export default function LoginScreen() {
           <TouchableOpacity
               onPress={handleGoogleLogin}
               disabled={isLoading}
-              style={{opacity: isLoading ? 0.7 : 1}}
+              style={{opacity: isLoading && provider === 'google' ? 0.7 : 1}}
           >
             <Image
                 source={require("@/assets/images/google.png")}
@@ -96,7 +133,7 @@ export default function LoginScreen() {
           <TouchableOpacity
               onPress={handleKakaoLogin}
               disabled={isLoading}
-              style={{opacity: isLoading ? 0.7 : 1}}
+              style={{opacity: isLoading && provider === 'kakao' ? 0.7 : 1}}
           >
             <Image
                 source={require("@/assets/images/kakao.png")}

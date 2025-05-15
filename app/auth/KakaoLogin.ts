@@ -1,12 +1,15 @@
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import {Platform} from "react-native";
+import { API_URL } from "@/app/config/api";
 
-// 백엔드 서버 URL 설정
-const BACKEND_URL = "http://localhost:8080";
-const KAKAO_AUTH_URL = `${BACKEND_URL}/oauth2/authorization/kakao`;
+// 카카오 인증 URL
+const KAKAO_AUTH_URL = `${API_URL}/oauth2/authorization/kakao`;
 
-// 카카오 로그인 함수
+/**
+ * 카카오 로그인 시작 함수
+ * 플랫폼에 따라 적절한 로그인 방식을 사용합니다.
+ */
 export async function signInWithKakao(): Promise<{
   token: string;
   refreshToken: string | undefined;
@@ -23,7 +26,9 @@ export async function signInWithKakao(): Promise<{
   }
 }
 
-// 웹 환경에서 현재 창에서 직접 리다이렉트 사용
+/**
+ * 웹 환경에서 현재 창에서 직접 리다이렉트 사용하는 카카오 로그인
+ */
 function webKakaoLoginDirect(): Promise<{
   token: string;
   refreshToken: string | undefined;
@@ -86,7 +91,9 @@ function webKakaoLoginDirect(): Promise<{
   });
 }
 
-// 네이티브 환경에서 카카오 로그인
+/**
+ * 네이티브 환경에서 WebBrowser를 사용하는 카카오 로그인
+ */
 function nativeKakaoLogin(): Promise<{
   token: string;
   refreshToken: string | undefined;
@@ -162,7 +169,9 @@ function nativeKakaoLogin(): Promise<{
   });
 }
 
-// 로그인 콜백 처리 함수 (웹 환경 전용)
+/**
+ * 로그인 콜백 처리 함수 (웹 환경 전용)
+ */
 export function handleKakaoLoginCallback(): {
   token: string,
   refreshToken: string | undefined,

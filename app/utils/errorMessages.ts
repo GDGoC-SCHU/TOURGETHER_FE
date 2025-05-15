@@ -65,4 +65,10 @@ export const getPhoneVerificationErrorMessage = (
   }
   
   return PHONE_VERIFICATION_ERRORS[errorType].DEFAULT;
+};
+
+// 기본 내보내기
+export default {
+  PHONE_VERIFICATION_ERRORS,
+  getPhoneVerificationErrorMessage
 }; 

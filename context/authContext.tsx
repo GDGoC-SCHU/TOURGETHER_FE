@@ -8,7 +8,7 @@ interface AuthContextType {
   userId: string | null;
   needPhoneVerification: boolean;
   loading: boolean;
-  checkAuthStatus: () => Promise<void>;
+  checkAuthStatus: () => Promise<boolean>;
   logout: () => Promise<void>;
   getAuthHeader: () => Promise<{ headers: { Authorization: string } }>;
 }
@@ -115,19 +115,47 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
   const checkAuthStatus = async () => {
     try {
       setLoading(true);
+      console.log('인증 상태 확인 시작');
+      
+      // URL 파라미터에서 인증 정보 확인 (웹 환경에서만)
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlUserId = urlParams.get('userId');
+        const urlNeedPhoneVerification = urlParams.get('needPhoneVerification') === 'true';
+        
+        console.log('URL 파라미터 확인:', { urlUserId, urlNeedPhoneVerification });
+        
+        if (urlUserId) {
+          console.log('URL에서 인증 정보 발견, 상태 업데이트');
+          setIsAuthenticated(true);
+          setUserId(urlUserId);
+          setNeedPhoneVerification(urlNeedPhoneVerification);
+          
+          // 전역 상태 업데이트
+          globalAuthState = {
+            ...globalAuthState,
+            isAuthenticated: true,
+            userId: urlUserId,
+            needPhoneVerification: urlNeedPhoneVerification
+          };
+          
+          setLoading(false);
+          return true;
+        }
+      }
       
       // 백엔드에 인증 상태 확인 요청
       const response = await api.get('/api/auth/status');
+      console.log('백엔드 응답:', response.data);
+      
       const { isAuthenticated: authStatus, userId: id, needPhoneVerification: needPhone } = response.data;
       
-      console.log('인증 상태 확인 결과:', response.data);
-      
       // 서버에서 받은 userId가 문자열이 아닌 경우 문자열로 변환
-      const userId = id !== null && id !== undefined ? id.toString() : null;
-      console.log('변환된 userId:', userId);
+      const userIdStr = id !== null && id !== undefined ? id.toString() : null;
+      console.log('변환된 userId:', userIdStr);
       
       setIsAuthenticated(authStatus || false);
-      setUserId(userId);
+      setUserId(userIdStr);
       setNeedPhoneVerification(needPhone || false);
       
       // 모바일 환경에서는 토큰 정보 로컬 저장 (필요시)
@@ -137,8 +165,8 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
           await SecureStore.setItemAsync('refreshToken', response.data.refreshToken);
         }
         // userId가 있을 경우에만 저장
-        if (userId) {
-          await SecureStore.setItemAsync('userId', userId);
+        if (userIdStr) {
+          await SecureStore.setItemAsync('userId', userIdStr);
         }
         await SecureStore.setItemAsync('needPhoneVerification', needPhone ? 'true' : 'false');
       }
@@ -147,11 +175,17 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
       globalAuthState = {
         ...globalAuthState,
         isAuthenticated: authStatus || false,
-        userId: userId,
+        userId: userIdStr,
         needPhoneVerification: needPhone || false
       };
       
-      return authStatus;
+      console.log('인증 상태 업데이트 완료:', {
+        isAuthenticated: authStatus || false,
+        userId: userIdStr,
+        needPhoneVerification: needPhone || false
+      });
+      
+      return authStatus || false;
     } catch (error) {
       console.error('인증 상태 확인 오류:', error);
       

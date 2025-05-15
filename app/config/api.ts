@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import {Platform} from 'react-native';
 
 // API 기본 URL
-export const API_URL = process.env.API_URL || 'http://localhost:8080';
+export const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
 // axios 인스턴스 생성
 const api = axios.create({
@@ -17,6 +17,17 @@ const api = axios.create({
   xsrfCookieName: 'XSRF-TOKEN',
   xsrfHeaderName: 'X-XSRF-TOKEN',
 });
+
+// 웹 환경에서 localStorage의 토큰을 사용하는 인터셉터 추가
+if (Platform.OS === 'web') {
+  api.interceptors.request.use((config) => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
+}
 
 // 모바일 환경에서 요청 인터셉터 (토큰 헤더에 추가)
 if (Platform.OS !== 'web') {
@@ -109,5 +120,19 @@ if (Platform.OS === 'web') {
     }
   );
 }
+
+/**
+ * 사용자 로그인 상태 확인
+ * @returns {boolean} 로그인 여부
+ */
+export const isLoggedIn = () => {
+  if (Platform.OS === 'web') {
+    return !!localStorage.getItem("accessToken");
+  } else {
+    // 모바일 환경에서는 비동기 함수이므로 이 방식으로는 확인할 수 없음
+    // 실제 사용시에는 async 함수로 구현해야 함
+    return false;
+  }
+};
 
 export default api; 

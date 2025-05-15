@@ -3,19 +3,25 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Modal
+  Modal,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  ScrollView,
+  StyleSheet
 } from 'react-native';
 import {useRouter} from 'expo-router';
 import {useAuth} from '@/context/authContext';
 import {usePhoneAuth} from '@/app/hooks/usePhoneAuth';
 import {PHONE_VERIFICATION_ERRORS} from '@/app/utils/errorMessages';
 
-// 전화번호 인증 컴포넌트
+/**
+ * 전화번호 인증 화면 컴포넌트
+ * 사용자의 전화번호를 인증하는 기능을 제공합니다.
+ */
 export default function VerifyPhoneScreen() {
   const {needPhoneVerification} = useAuth();
   const router = useRouter();
@@ -32,7 +38,27 @@ export default function VerifyPhoneScreen() {
     resendVerificationCode
   } = usePhoneAuth();
 
-  // 전화번호 인증 완료 후 처리
+  /**
+   * 전화번호 형식화 (예: 010-1234-5678)
+   */
+  const formatPhoneNumber = (number: string): string => {
+    if (!number) return '';
+    
+    // 숫자만 추출
+    const digits = number.replace(/\D/g, '');
+    
+    if (digits.length <= 3) {
+      return digits;
+    } else if (digits.length <= 7) {
+      return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+    } else {
+      return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
+    }
+  };
+
+  /**
+   * 전화번호 인증 완료 후 처리
+   */
   const handleVerifyComplete = async () => {
     const success = await verifyCode();
     if (success) {
@@ -60,14 +86,16 @@ export default function VerifyPhoneScreen() {
     }
   };
 
-  // 인증 코드 재전송 처리
+  /**
+   * 인증 코드 재전송 처리
+   */
   const handleResendCode = async () => {
     await resendVerificationCode();
   };
 
-  // 이미 인증된 경우 미들웨어가 자동으로 리다이렉트 처리
-
-  // 로딩 메시지 결정
+  /**
+   * 로딩 메시지 결정
+   */
   const getLoadingMessage = () => {
     if (!isLoading) return "";
     
@@ -79,181 +107,229 @@ export default function VerifyPhoneScreen() {
   };
 
   return (
-      <View style={styles.container}>
-        <Text style={styles.title}>전화번호 인증</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoid}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.container}>
+            {/* 헤더 */}
+            <View style={styles.header}>
+              <Text style={styles.title}>전화번호 인증</Text>
+              <Text style={styles.subtitle}>
+                안전한 서비스 이용을 위해 전화번호 인증이 필요합니다.
+              </Text>
+            </View>
 
-        <Text style={styles.subtitle}>
-          안전한 서비스 이용을 위해 전화번호 인증이 필요합니다.
-        </Text>
+            {/* 메시지 표시 */}
+            {message ? (
+              <View style={styles.messageContainer}>
+                <Text style={[
+                  styles.message,
+                  message.includes('실패') || message.includes('오류')
+                    ? styles.errorMessage
+                    : styles.successMessage
+                ]}>
+                  {message}
+                </Text>
+              </View>
+            ) : null}
 
-        <View style={styles.inputContainer}>
-          <TextInput
-              style={styles.input}
-              placeholder="전화번호 (-없이 입력)"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-              editable={!isLoading}
-          />
-
-          <TouchableOpacity
-              style={[
-                styles.button,
-                isLoading && styles.buttonDisabled
-              ]}
-              onPress={isCodeSent ? handleResendCode : sendVerificationCode}
-              disabled={isLoading}
-          >
-            <Text style={styles.buttonText}>
-              {isCodeSent ? "재전송" : "인증번호 받기"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {isCodeSent && (
-            <View style={styles.verificationContainer}>
-              <TextInput
+            {/* 전화번호 입력 또는 인증코드 입력 */}
+            {!isCodeSent ? (
+              <View style={styles.formContainer}>
+                <Text style={styles.label}>전화번호</Text>
+                <TextInput
                   style={styles.input}
-                  placeholder="인증번호 입력"
+                  placeholder="01012345678"
+                  keyboardType="phone-pad"
+                  value={phone}
+                  onChangeText={(text) => {
+                    const formatted = formatPhoneNumber(text);
+                    setPhone(formatted);
+                  }}
+                  editable={!isLoading}
+                />
+                
+                <TouchableOpacity
+                  style={[styles.button, isLoading && styles.buttonDisabled]}
+                  onPress={sendVerificationCode}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.buttonText}>
+                    인증번호 받기
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.formContainer}>
+                <Text style={styles.label}>인증 코드</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="인증 코드 입력"
                   keyboardType="number-pad"
                   value={code}
                   onChangeText={setCode}
                   editable={!isLoading}
-              />
-
-              <TouchableOpacity
+                  maxLength={6}
+                />
+                
+                <TouchableOpacity
                   style={[styles.button, isLoading && styles.buttonDisabled]}
                   onPress={handleVerifyComplete}
                   disabled={isLoading || !code}
-              >
-                <Text style={styles.buttonText}>확인</Text>
-              </TouchableOpacity>
-            </View>
-        )}
+                >
+                  <Text style={styles.buttonText}>확인</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.secondaryButton}
+                  onPress={handleResendCode}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.secondaryButtonText}>인증번호 재전송</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
-        {message ? (
-            <Text style={[
-              styles.message,
-              message.includes('실패') || message.includes('오류')
-                  ? styles.errorMessage
-                  : styles.successMessage
-            ]}>
-              {message}
-            </Text>
-        ) : null}
-
-        {/* 웹 환경에서만 보이는 reCAPTCHA 컨테이너 */}
-        {Platform.OS === 'web' && (
-            <View nativeID="recaptcha-container" style={styles.recaptchaContainer}/>
-        )}
-
-        {/* 로딩 모달 */}
-        <Modal
-            transparent={true}
-            visible={isLoading}
-            animationType="fade"
-        >
-            <View style={styles.modalBackground}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#3897f0" />
-                    <Text style={styles.loadingText}>{getLoadingMessage()}</Text>
-                </View>
-            </View>
-        </Modal>
-      </View>
+      {/* 로딩 모달 */}
+      <Modal
+        transparent={true}
+        visible={isLoading}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ActivityIndicator size="large" color="#4285F4" />
+            <Text style={styles.modalText}>{getLoadingMessage()}</Text>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  keyboardAvoid: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
+  },
+  container: {
     backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    width: '100%',
+    maxWidth: 500,
+    marginHorizontal: 'auto',
+  },
+  header: {
+    marginBottom: 24,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 8,
+    textAlign: 'center',
     color: '#333',
   },
   subtitle: {
     fontSize: 16,
-    marginBottom: 30,
-    textAlign: 'center',
     color: '#666',
-    maxWidth: 300,
+    textAlign: 'center',
+    marginBottom: 16,
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-    width: '100%',
-    maxWidth: 400,
-  },
-  verificationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 400,
-  },
-  input: {
-    flex: 1,
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginRight: 10,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: '#3897f0',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    backgroundColor: '#b2dffc',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
+  messageContainer: {
+    marginBottom: 16,
   },
   message: {
-    marginTop: 20,
-    fontSize: 16,
-    textAlign: 'center',
+    padding: 12,
+    borderRadius: 4,
+    fontSize: 14,
   },
   errorMessage: {
-    color: 'red',
+    backgroundColor: '#ffebee',
+    borderLeftWidth: 4,
+    borderLeftColor: '#f44336',
+    color: '#d32f2f',
   },
   successMessage: {
-    color: 'green',
+    backgroundColor: '#e8f5e9',
+    borderLeftWidth: 4,
+    borderLeftColor: '#4caf50',
+    color: '#2e7d32',
   },
-  loader: {
-    marginTop: 20,
+  formContainer: {
+    width: '100%',
   },
-  recaptchaContainer: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    height: 1,
-    width: 1,
-    opacity: 0.01,
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+    fontWeight: '500',
+    color: '#333',
   },
-  // 로딩 모달 스타일
-  modalBackground: {
+  input: {
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 16,
+    backgroundColor: '#fff',
+  },
+  button: {
+    backgroundColor: '#4285F4', // Google 블루
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  buttonDisabled: {
+    backgroundColor: '#a0a0a0',
+    opacity: 0.7,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  secondaryButtonText: {
+    color: '#4285F4',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
-  loadingContainer: {
+  modalContent: {
     backgroundColor: 'white',
     padding: 25,
     borderRadius: 10,
@@ -264,12 +340,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    minWidth: 250,
+    minWidth: 250
   },
-  loadingText: {
+  modalText: {
     marginTop: 15,
     fontSize: 16,
     color: '#333',
-    textAlign: 'center',
+    textAlign: 'center'
   }
 });

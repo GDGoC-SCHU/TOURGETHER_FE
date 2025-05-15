@@ -1,0 +1,237 @@
+[debug] [2025-05-14T13:01:19.010Z] ----------------------------------------------------------------------
+[debug] [2025-05-14T13:01:19.012Z] Command:       /usr/local/bin/node /Users/leejungbin/.npm-global/bin/firebase init
+[debug] [2025-05-14T13:01:19.012Z] CLI Version:   14.3.1
+[debug] [2025-05-14T13:01:19.012Z] Platform:      darwin
+[debug] [2025-05-14T13:01:19.012Z] Node Version:  v20.16.0
+[debug] [2025-05-14T13:01:19.012Z] Time:          Wed May 14 2025 22:01:19 GMT+0900 (Korean Standard Time)
+[debug] [2025-05-14T13:01:19.012Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-05-14T13:01:19.015Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-05-14T13:01:19.015Z] > authorizing via signed-in user (muzidea0808@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /Users/leejungbin/Downloads/TOURGETHER_FE
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-05-14T13:04:02.047Z] Checked if tokens are valid: false, expires at: 1738256543012
+[debug] [2025-05-14T13:04:02.049Z] Checked if tokens are valid: false, expires at: 1738256543012
+[debug] [2025-05-14T13:04:02.049Z] > refreshing access token with scopes: []
+[debug] [2025-05-14T13:04:02.054Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-05-14T13:04:02.054Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-05-14T13:04:03.845Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-05-14T13:04:03.846Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-05-14T13:04:03.860Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=100
+[debug] [2025-05-14T13:04:04.520Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2025-05-14T13:04:04.520Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2025-05-14T13:04:51.993Z] ExitPromptError: User force closed the prompt with SIGINT
+    at Interface.sigint (/Users/leejungbin/.npm-global/lib/node_modules/firebase-tools/node_modules/@inquirer/core/dist/commonjs/lib/create-prompt.js:100:37)
+    at Interface.emit (node:events:519:28)
+    at Interface.emit (node:domain:488:12)
+    at [_ttyWrite] [as _ttyWrite] (node:internal/readline/interface:1126:18)
+    at ReadStream.onkeypress (node:internal/readline/interface:265:20)
+    at ReadStream.emit (node:events:531:35)
+    at ReadStream.emit (node:domain:488:12)
+    at emitKeys (node:internal/readline/utils:371:14)
+    at emitKeys.next (<anonymous>)
+    at ReadStream.onData (node:internal/readline/emitKeypressEvents:64:36)
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2025-05-14T13:04:57.019Z] ----------------------------------------------------------------------
+[debug] [2025-05-14T13:04:57.025Z] Command:       /usr/local/bin/node /Users/leejungbin/.npm-global/bin/firebase init
+[debug] [2025-05-14T13:04:57.025Z] CLI Version:   14.3.1
+[debug] [2025-05-14T13:04:57.025Z] Platform:      darwin
+[debug] [2025-05-14T13:04:57.025Z] Node Version:  v20.16.0
+[debug] [2025-05-14T13:04:57.025Z] Time:          Wed May 14 2025 22:04:57 GMT+0900 (Korean Standard Time)
+[debug] [2025-05-14T13:04:57.025Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-05-14T13:04:57.028Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-05-14T13:04:57.029Z] > authorizing via signed-in user (muzidea0808@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /Users/leejungbin/Downloads/TOURGETHER_FE
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-05-14T13:05:03.087Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:03.087Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:03.097Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=100
+[debug] [2025-05-14T13:05:04.365Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2025-05-14T13:05:04.365Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] i  Using project tripmate-test-18915 (tripmate-test) 
+[info] 
+=== Dataconnect Setup
+[debug] [2025-05-14T13:05:28.735Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:28.735Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:28.735Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/tripmate-test-18915/billingInfo [none]
+[debug] [2025-05-14T13:05:30.209Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/tripmate-test-18915/billingInfo 200
+[debug] [2025-05-14T13:05:30.209Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/tripmate-test-18915/billingInfo {"name":"projects/tripmate-test-18915/billingInfo","projectId":"tripmate-test-18915","billingAccountName":"billingAccounts/01F4AA-831665-4CC5CC","billingEnabled":true}
+[info] i  dataconnect: ensuring required API firebasedataconnect.googleapis.com is enabled... 
+[debug] [2025-05-14T13:05:30.210Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:30.210Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:30.211Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-05-14T13:05:30.211Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:05:31.619Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-05-14T13:05:31.620Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/firebasedataconnect.googleapis.com [omitted]
+[warn] ⚠  dataconnect: missing required API firebasedataconnect.googleapis.com. Enabling now... 
+[debug] [2025-05-14T13:05:31.621Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:31.621Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:31.622Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/firebasedataconnect.googleapis.com:enable [none]
+[debug] [2025-05-14T13:05:31.622Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/firebasedataconnect.googleapis.com:enable x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:05:32.106Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/firebasedataconnect.googleapis.com:enable 200
+[debug] [2025-05-14T13:05:32.106Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/firebasedataconnect.googleapis.com:enable [omitted]
+[debug] [2025-05-14T13:05:42.108Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:42.109Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:42.109Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-05-14T13:05:42.110Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:05:43.259Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-05-14T13:05:43.259Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/firebasedataconnect.googleapis.com [omitted]
+[info] ✔  dataconnect: required API firebasedataconnect.googleapis.com is enabled 
+[info] i  dataconnect: ensuring required API sqladmin.googleapis.com is enabled... 
+[debug] [2025-05-14T13:05:43.266Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:43.266Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:43.267Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/sqladmin.googleapis.com [none]
+[debug] [2025-05-14T13:05:43.267Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/sqladmin.googleapis.com x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:05:43.591Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/sqladmin.googleapis.com 200
+[debug] [2025-05-14T13:05:43.591Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/sqladmin.googleapis.com [omitted]
+[warn] ⚠  dataconnect: missing required API sqladmin.googleapis.com. Enabling now... 
+[debug] [2025-05-14T13:05:43.592Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:43.592Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:43.592Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/sqladmin.googleapis.com:enable [none]
+[debug] [2025-05-14T13:05:43.592Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/sqladmin.googleapis.com:enable x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:05:44.343Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/sqladmin.googleapis.com:enable 200
+[debug] [2025-05-14T13:05:44.343Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/sqladmin.googleapis.com:enable [omitted]
+[debug] [2025-05-14T13:05:54.347Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:54.348Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:54.349Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/sqladmin.googleapis.com [none]
+[debug] [2025-05-14T13:05:54.349Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/sqladmin.googleapis.com x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:05:56.453Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/sqladmin.googleapis.com 200
+[debug] [2025-05-14T13:05:56.453Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/sqladmin.googleapis.com [omitted]
+[info] ✔  dataconnect: required API sqladmin.googleapis.com is enabled 
+[info] i  dataconnect: ensuring required API compute.googleapis.com is enabled... 
+[debug] [2025-05-14T13:05:56.458Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:56.458Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:56.458Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [none]
+[debug] [2025-05-14T13:05:56.458Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:05:57.423Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com 200
+[debug] [2025-05-14T13:05:57.425Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [omitted]
+[warn] ⚠  dataconnect: missing required API compute.googleapis.com. Enabling now... 
+[debug] [2025-05-14T13:05:57.427Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:57.429Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:05:57.442Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com:enable [none]
+[debug] [2025-05-14T13:05:57.445Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com:enable x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:05:58.147Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com:enable 200
+[debug] [2025-05-14T13:05:58.148Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com:enable [omitted]
+[debug] [2025-05-14T13:06:08.153Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:06:08.155Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:06:08.156Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [none]
+[debug] [2025-05-14T13:06:08.156Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:06:09.721Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com 200
+[debug] [2025-05-14T13:06:09.722Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [omitted]
+[info] i  dataconnect: waiting for API compute.googleapis.com to activate... 
+[debug] [2025-05-14T13:06:19.731Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:06:19.733Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:06:19.733Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [none]
+[debug] [2025-05-14T13:06:19.734Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:06:21.202Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com 200
+[debug] [2025-05-14T13:06:21.203Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [omitted]
+[info] i  dataconnect: waiting for API compute.googleapis.com to activate... 
+[debug] [2025-05-14T13:06:31.205Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:06:31.206Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:06:31.207Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [none]
+[debug] [2025-05-14T13:06:31.207Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:06:32.881Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com 200
+[debug] [2025-05-14T13:06:32.881Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [omitted]
+[info] i  dataconnect: waiting for API compute.googleapis.com to activate... 
+[debug] [2025-05-14T13:06:42.885Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:06:42.887Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:06:42.887Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [none]
+[debug] [2025-05-14T13:06:42.887Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:06:44.358Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com 200
+[debug] [2025-05-14T13:06:44.358Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [omitted]
+[info] i  dataconnect: waiting for API compute.googleapis.com to activate... 
+[debug] [2025-05-14T13:06:54.361Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:06:54.362Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:06:54.362Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [none]
+[debug] [2025-05-14T13:06:54.362Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:06:55.929Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com 200
+[debug] [2025-05-14T13:06:55.929Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [omitted]
+[info] i  dataconnect: waiting for API compute.googleapis.com to activate... 
+[debug] [2025-05-14T13:07:05.932Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:07:05.942Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:07:05.943Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [none]
+[debug] [2025-05-14T13:07:05.943Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com x-goog-quota-user=projects/tripmate-test-18915
+[debug] [2025-05-14T13:07:08.058Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com 200
+[debug] [2025-05-14T13:07:08.058Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/tripmate-test-18915/services/compute.googleapis.com [omitted]
+[info] ✔  dataconnect: required API compute.googleapis.com is enabled 
+[debug] [2025-05-14T13:07:08.063Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:07:08.063Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:07:08.063Z] >>> [apiv2][query] GET https://firebasedataconnect.googleapis.com/v1/projects/tripmate-test-18915/locations/-/services [none]
+[debug] [2025-05-14T13:07:09.441Z] <<< [apiv2][status] GET https://firebasedataconnect.googleapis.com/v1/projects/tripmate-test-18915/locations/-/services 200
+[debug] [2025-05-14T13:07:09.441Z] <<< [apiv2][body] GET https://firebasedataconnect.googleapis.com/v1/projects/tripmate-test-18915/locations/-/services {}
+[debug] [2025-05-14T13:07:28.580Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:07:28.581Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:07:28.581Z] >>> [apiv2][query] GET https://sqladmin.googleapis.com/v1/projects/tripmate-test-18915/instances [none]
+[debug] [2025-05-14T13:07:29.649Z] <<< [apiv2][status] GET https://sqladmin.googleapis.com/v1/projects/tripmate-test-18915/instances 200
+[debug] [2025-05-14T13:07:29.649Z] <<< [apiv2][body] GET https://sqladmin.googleapis.com/v1/projects/tripmate-test-18915/instances {}
+[debug] [2025-05-14T13:07:32.874Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:07:32.874Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:07:32.874Z] >>> [apiv2][query] GET https://firebasedataconnect.googleapis.com/v1/projects/tripmate-test-18915/locations [none]
+[debug] [2025-05-14T13:07:33.947Z] <<< [apiv2][status] GET https://firebasedataconnect.googleapis.com/v1/projects/tripmate-test-18915/locations 200
+[debug] [2025-05-14T13:07:33.947Z] <<< [apiv2][body] GET https://firebasedataconnect.googleapis.com/v1/projects/tripmate-test-18915/locations {"locations":[{"name":"projects/tripmate-test-18915/locations/asia-east1","locationId":"asia-east1","displayName":"Taiwan"},{"name":"projects/tripmate-test-18915/locations/asia-east2","locationId":"asia-east2","displayName":"Hong Kong"},{"name":"projects/tripmate-test-18915/locations/asia-northeast1","locationId":"asia-northeast1","displayName":"Tokyo"},{"name":"projects/tripmate-test-18915/locations/asia-northeast2","locationId":"asia-northeast2","displayName":"Osaka"},{"name":"projects/tripmate-test-18915/locations/asia-northeast3","locationId":"asia-northeast3","displayName":"Seoul"},{"name":"projects/tripmate-test-18915/locations/asia-south1","locationId":"asia-south1","displayName":"Mumbai"},{"name":"projects/tripmate-test-18915/locations/asia-southeast1","locationId":"asia-southeast1","displayName":"Singapore"},{"name":"projects/tripmate-test-18915/locations/asia-southeast2","locationId":"asia-southeast2","displayName":"Jakarta"},{"name":"projects/tripmate-test-18915/locations/australia-southeast1","locationId":"australia-southeast1","displayName":"Sydney"},{"name":"projects/tripmate-test-18915/locations/australia-southeast2","locationId":"australia-southeast2","displayName":"Melbourne"},{"name":"projects/tripmate-test-18915/locations/europe-central2","locationId":"europe-central2","displayName":"Warsaw"},{"name":"projects/tripmate-test-18915/locations/europe-north1","locationId":"europe-north1","displayName":"Finland"},{"name":"projects/tripmate-test-18915/locations/europe-southwest1","locationId":"europe-southwest1","displayName":"Madrid"},{"name":"projects/tripmate-test-18915/locations/europe-west1","locationId":"europe-west1","displayName":"Belgium"},{"name":"projects/tripmate-test-18915/locations/europe-west2","locationId":"europe-west2","displayName":"London"},{"name":"projects/tripmate-test-18915/locations/europe-west3","locationId":"europe-west3","displayName":"Frankfurt"},{"name":"projects/tripmate-test-18915/locations/europe-west4","locationId":"europe-west4","displayName":"Netherlands"},{"name":"projects/tripmate-test-18915/locations/europe-west6","locationId":"europe-west6","displayName":"Zurich"},{"name":"projects/tripmate-test-18915/locations/europe-west8","locationId":"europe-west8","displayName":"Milan"},{"name":"projects/tripmate-test-18915/locations/europe-west9","locationId":"europe-west9","displayName":"Paris"},{"name":"projects/tripmate-test-18915/locations/me-west1","locationId":"me-west1","displayName":"Tel Aviv"},{"name":"projects/tripmate-test-18915/locations/northamerica-northeast1","locationId":"northamerica-northeast1","displayName":"Montréal"},{"name":"projects/tripmate-test-18915/locations/northamerica-northeast2","locationId":"northamerica-northeast2","displayName":"Toronto"},{"name":"projects/tripmate-test-18915/locations/southamerica-east1","locationId":"southamerica-east1","displayName":"São Paulo"},{"name":"projects/tripmate-test-18915/locations/southamerica-west1","locationId":"southamerica-west1","displayName":"Santiago"},{"name":"projects/tripmate-test-18915/locations/us-central1","locationId":"us-central1","displayName":"Iowa"},{"name":"projects/tripmate-test-18915/locations/us-east1","locationId":"us-east1","displayName":"South Carolina"},{"name":"projects/tripmate-test-18915/locations/us-east4","locationId":"us-east4","displayName":"Northern Virginia"},{"name":"projects/tripmate-test-18915/locations/us-south1","locationId":"us-south1","displayName":"Dallas"},{"name":"projects/tripmate-test-18915/locations/us-west1","locationId":"us-west1","displayName":"Oregon"},{"name":"projects/tripmate-test-18915/locations/us-west2","locationId":"us-west2","displayName":"Los Angeles"},{"name":"projects/tripmate-test-18915/locations/us-west3","locationId":"us-west3","displayName":"Salt Lake City"},{"name":"projects/tripmate-test-18915/locations/us-west4","locationId":"us-west4","displayName":"Las Vegas"}]}
+[debug] [2025-05-14T13:08:27.769Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:08:27.773Z] Checked if tokens are valid: true, expires at: 1747231442846
+[debug] [2025-05-14T13:08:27.775Z] >>> [apiv2][query] GET https://sqladmin.googleapis.com/v1/projects/tripmate-test-18915/instances/tourgether_fe-fdc/databases [none]
+[debug] [2025-05-14T13:08:28.232Z] <<< [apiv2][status] GET https://sqladmin.googleapis.com/v1/projects/tripmate-test-18915/instances/tourgether_fe-fdc/databases 400
+[debug] [2025-05-14T13:08:28.232Z] <<< [apiv2][body] GET https://sqladmin.googleapis.com/v1/projects/tripmate-test-18915/instances/tourgether_fe-fdc/databases {"error":{"code":400,"message":"Invalid request: instance name (tourgether_fe-fdc).","errors":[{"message":"Invalid request: instance name (tourgether_fe-fdc).","domain":"global","reason":"invalid"}]}}
+[debug] [2025-05-14T13:08:28.240Z] [dataconnect] Cannot list databases during init: FirebaseError: Request to https://sqladmin.googleapis.com/v1/projects/tripmate-test-18915/instances/tourgether_fe-fdc/databases had HTTP Error: 400, Invalid request: instance name (tourgether_fe-fdc).
+[info] ✔  Wrote dataconnect/dataconnect.yaml 
+[info] ✔  Wrote dataconnect/schema/schema.gql 
+[info] ✔  Wrote dataconnect/connector/connector.yaml 
+[info] ✔  Wrote dataconnect/connector/queries.gql 
+[info] ✔  Wrote dataconnect/connector/mutations.gql 
+[info] ✔  Detected WEB app in directory /Users/leejungbin/Downloads/TOURGETHER_FE 
+[info] i  Detected react app. Enabling react generated SDKs. 
+[info] i  Writing your new SDK configuration to /Users/leejungbin/Downloads/TOURGETHER_FE/dataconnect/connector/connector.yaml 
+[info] ✔  Wrote dataconnect/connector/connector.yaml 
+[info] i  dataconnect: downloading dataconnect-emulator-2.5.0... {"metadata":{"emulator":{"name":"dataconnect"},"message":"downloading dataconnect-emulator-2.5.0..."}}
+[debug] [2025-05-14T13:09:31.621Z] >>> [apiv2][query] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-macos-v2.5.0 
+[debug] [2025-05-14T13:09:32.264Z] <<< [apiv2][status] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-macos-v2.5.0 200
+[debug] [2025-05-14T13:09:32.264Z] <<< [apiv2][body] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-macos-v2.5.0 [stream]
+[debug] [2025-05-14T13:09:36.848Z] Error: EACCES: permission denied, copyfile '/var/folders/cg/xhv549ln7db228ly_v8l67t00000gn/T/tmp-16544-FGN1Q2Aw6q6Z' -> '/Users/leejungbin/.cache/firebase/emulators/dataconnect-emulator-2.5.0'
+    at Object.copyFileSync (node:fs:3035:11)
+    at copyFile (/Users/leejungbin/.npm-global/lib/node_modules/firebase-tools/node_modules/fs-extra/lib/copy/copy-sync.js:73:6)
+    at onFile (/Users/leejungbin/.npm-global/lib/node_modules/firebase-tools/node_modules/fs-extra/lib/copy/copy-sync.js:59:25)
+    at getStats (/Users/leejungbin/.npm-global/lib/node_modules/firebase-tools/node_modules/fs-extra/lib/copy/copy-sync.js:51:44)
+    at handleFilterAndCopy (/Users/leejungbin/.npm-global/lib/node_modules/firebase-tools/node_modules/fs-extra/lib/copy/copy-sync.js:36:10)
+    at Object.copySync (/Users/leejungbin/.npm-global/lib/node_modules/firebase-tools/node_modules/fs-extra/lib/copy/copy-sync.js:29:10)
+    at downloadEmulator (/Users/leejungbin/.npm-global/lib/node_modules/firebase-tools/lib/emulator/download.js:30:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async downloadIfNecessary (/Users/leejungbin/.npm-global/lib/node_modules/firebase-tools/lib/emulator/downloadableEmulators.js:449:9)
+    at async DataConnectEmulator.generate (/Users/leejungbin/.npm-global/lib/node_modules/firebase-tools/lib/emulator/dataconnectEmulator.js:158:29)
+[error] 
+[error] Error: An unexpected error has occurred.

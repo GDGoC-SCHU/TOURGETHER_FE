@@ -3,6 +3,10 @@ import {Stack} from 'expo-router';
 import {AuthProvider} from '@/context/authContext';
 import {AuthMiddlewareProvider} from '@/context/authMiddleware';
 
+/**
+ * 앱의 루트 레이아웃 컴포넌트
+ * 인증 관련 컨텍스트 제공자와 라우팅 스택을 설정합니다.
+ */
 export default function RootLayout() {
   return (
     <AuthProvider>
