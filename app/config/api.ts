@@ -1,6 +1,19 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import {Platform} from 'react-native';
+import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+
+// MIME 타입 매핑 함수
+const getMimeType = (extension: string): string => {
+  const mimeTypes: { [key: string]: string } = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp'
+  };
+  return mimeTypes[extension.toLowerCase()] || 'image/jpeg';
+};
 
 // API 기본 URL
 export const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
@@ -164,41 +177,59 @@ export const profileApi = {
   // 프로필 설정 (회원가입 완료)
   setupProfile: async (profileData: any, profileImage: any) => {
     try {
-      const formData = new FormData();
+      console.log('프로필 설정 요청 데이터:', profileData);
       
-      // Platform 별로 다른 처리
-      if (Platform.OS === 'web') {
-        // 웹 환경에서는 JSON을 Blob으로 변환
-        const profileBlob = new Blob([JSON.stringify(profileData)], { type: 'application/json' });
-        formData.append('profileData', profileBlob);
-      } else {
-        // React Native 환경에서는 문자열로 변환
-        formData.append('profileData', JSON.stringify(profileData));
-      }
-      
-      // 이미지가 있는 경우 추가
-      if (profileImage) {
-        const imageFile = Platform.OS === 'web' 
-          ? profileImage // 웹에서는 File 객체 그대로 사용
-          : {            // React Native에서는 객체 형태로 전달
-              uri: profileImage,
-              type: 'image/jpeg',
-              name: 'profile-image.jpg',
-            };
-        
-        formData.append('profileImage', imageFile as any);
-      }
-      
-      console.log('프로필 설정 요청 데이터:', JSON.stringify(profileData));
-      
-      const response = await api.post('/api/user/register', formData, {
+      // 1. JSON 형식으로 프로필 데이터 전송
+      const profileResponse = await api.post('/api/user/register', profileData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
         },
       });
       
-      console.log('프로필 설정 응답:', response.data);
-      return response.data;
+      const userId = profileResponse.data.userId;
+      console.log('프로필 생성 응답:', profileResponse.data);
+      
+      // 2. 프로필 이미지 전송 (별도 요청)
+      if (profileImage && userId) {
+        console.log('프로필 이미지 업로드 시작');
+        const formData = new FormData();
+        
+        // 이미지 업로드용 FormData 구성 - 백엔드 파라미터명 "image"로 수정
+        if (Platform.OS === 'web') {
+          try {
+            const response = await fetch(profileImage);
+            const blob = await response.blob();
+            formData.append('image', blob, 'profile.jpg');
+          } catch (error) {
+            console.error('이미지 처리 중 오류:', error);
+            throw error;
+          }
+        } else {
+          const fileInfo = await FileSystem.getInfoAsync(profileImage);
+          
+          if (fileInfo.exists) {
+            const fileExtension = profileImage.split('.').pop() || 'jpg';
+            const mimeType = getMimeType(fileExtension);
+            
+            formData.append('image', {
+              uri: profileImage,
+              name: `profile.${fileExtension}`,
+              type: mimeType
+            } as any);
+          }
+        }
+        
+        // HTTP 메서드를 PUT으로 변경 (백엔드와 일치)
+        const imageResponse = await api.put(`/api/profile/${userId}/image`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        
+        console.log('이미지 업로드 응답:', imageResponse.data);
+      }
+      
+      return profileResponse.data;
     } catch (error) {
       console.error('프로필 설정 오류:', error);
       throw error;
@@ -215,6 +246,60 @@ export const profileApi = {
       console.error('프로필 조회 오류:', error);
       throw error;
     }
+  },
+
+  // 프로필 업데이트
+  updateProfile: async (userId: number, profileData: any, profileImage: any) => {
+    try {
+      const formData = new FormData();
+      
+      // profileData를 JSON 문자열로 변환하여 추가
+      formData.append('profileData', JSON.stringify({
+        nickname: profileData.nickname,
+        bio: profileData.bio,
+        gender: profileData.gender,
+        birthDate: profileData.birthDate,
+        tags: profileData.tags
+      }));
+      
+      // 이미지가 있는 경우 FormData에 추가
+      if (profileImage) {
+        if (Platform.OS === 'web') {
+          try {
+            const response = await fetch(profileImage);
+            const blob = await response.blob();
+            formData.append('profileImage', blob, 'profile.jpg');
+          } catch (error) {
+            console.error('이미지 처리 중 오류:', error);
+            throw error;
+          }
+        } else {
+          const fileInfo = await FileSystem.getInfoAsync(profileImage);
+          
+          if (fileInfo.exists) {
+            const fileExtension = profileImage.split('.').pop() || 'jpg';
+            const mimeType = getMimeType(fileExtension);
+            
+            formData.append('profileImage', {
+              uri: profileImage,
+              name: `profile.${fileExtension}`,
+              type: mimeType
+            } as any);
+          }
+        }
+      }
+      
+      const response = await api.put(`/api/profile/${userId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('프로필 업데이트 오류:', error);
+      throw error;
+    }
   }
 };
 
@@ -224,7 +309,15 @@ export const fileApi = {
   uploadProfileImage: async (userId: number, imageFile: any) => {
     try {
       const formData = new FormData();
-      formData.append('image', imageFile);
+      
+      // 이미지 업로드용 FormData 구성
+      if (Platform.OS === 'web') {
+        // 웹 환경 - imageFile이 이미 Blob 타입
+        formData.append('image', imageFile, 'profile.jpg');
+      } else {
+        // 모바일 환경 - 객체를 any 타입으로 전달
+        formData.append('image', imageFile as any);
+      }
       
       const response = await api.put(`/api/profile/${userId}/image`, formData, {
         headers: {
@@ -240,4 +333,4 @@ export const fileApi = {
   }
 };
 
-export default api; 
+export default api;

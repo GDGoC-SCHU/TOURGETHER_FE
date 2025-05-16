@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, ImageBackground } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, ImageBackground, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { Calendar } from "react-native-calendars";
@@ -7,8 +7,8 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from "@/constants/Colors";
 import { FontAwesome5 } from '@expo/vector-icons';
-
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+import api, { API_URL } from '@/app/config/api';  // api 인스턴스 가져오기
+import { useAuth } from '@/context/authContext';
 
 /**
  * 여행 계획 생성 화면 컴포넌트
@@ -21,6 +21,7 @@ export default function CreatingPlan() {
   const [selectingEnd, setSelectingEnd] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { getAuthHeader } = useAuth();
 
   // 도시별 배경 이미지 매핑
   const getCityImage = () => {
@@ -118,18 +119,35 @@ export default function CreatingPlan() {
     
     setIsLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/plan`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({city, startDate, endDate})
+      // 인증 헤더 가져오기 (디버깅용)
+      const authHeader = await getAuthHeader();
+      console.log("인증 헤더 확인:", authHeader.headers.Authorization);
+      
+      // axios 인스턴스 사용으로 변경 (자동으로 인증 헤더 적용)
+      const res = await api.post("/api/plan", {
+        city, 
+        startDate, 
+        endDate
       });
-      const data = await res.json();
-      console.log("Received response:", data);
+      
+      console.log("Received response:", res.data);
+      
       router.push({
         pathname: "/(tabs)/PlanResult",
-        params: {plan: JSON.stringify(data.plan ?? data)}
+        params: {
+          plan: JSON.stringify(res.data.plan ?? res.data),
+          city: city as string
+        }
       });
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Error generating plan:", err);
+      
+      // 에러 정보 자세히 출력
+      if (err.response) {
+        console.error("Response status:", err.response.status);
+        console.error("Response data:", err.response.data);
+      }
+      
       alert("Failed to generate travel plan. Please try again later.");
     } finally {
       setIsLoading(false);
@@ -286,9 +304,13 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     marginBottom: 16,
-    textShadowColor: 'rgba(0,0,0,0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+    ...(Platform.OS === 'web' ? {
+      textShadow: '-1px 1px 10px rgba(0,0,0,0.75)',
+    } : {
+      textShadowColor: 'rgba(0,0,0,0.75)',
+      textShadowOffset: { width: -1, height: 1 },
+      textShadowRadius: 10,
+    }),
   },
   title: {
     fontSize: 32,
@@ -296,28 +318,42 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 8,
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+    ...(Platform.OS === 'web' ? {
+      textShadow: '-1px 1px 10px rgba(0,0,0,0.75)',
+    } : {
+      textShadowColor: 'rgba(0,0,0,0.75)',
+      textShadowOffset: { width: -1, height: 1 },
+      textShadowRadius: 10,
+    }),
   },
   subtitle: {
     fontSize: 18,
     color: '#fff',
     marginBottom: 20,
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+    ...(Platform.OS === 'web' ? {
+      textShadow: '-1px 1px 10px rgba(0,0,0,0.75)',
+    } : {
+      textShadowColor: 'rgba(0,0,0,0.75)',
+      textShadowOffset: { width: -1, height: 1 },
+      textShadowRadius: 10,
+    }),
   },
   calendarCard: {
     backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: 16,
     padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
+    ...(Platform.OS === 'web' ? {
+      boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+    } : {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 10,
+    }),
+    borderWidth: 1,
+    borderColor: Colors.light.border,
   },
   dateInfo: {
     flexDirection: 'row',

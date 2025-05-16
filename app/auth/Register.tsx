@@ -59,9 +59,7 @@ export default function Register() {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // 태그 카테고리 및 태그 목록
-  const [mbtiTags, setMbtiTags] = useState<string[]>([]);
-  const [interestTags, setInterestTags] = useState<string[]>([]);
-  const [hobbyTags, setHobbyTags] = useState<string[]>([]);
+  const [categorizedTags, setCategorizedTags] = useState<{ [key: string]: string[] }>({});
   const [tagsLoaded, setTagsLoaded] = useState(false);
 
   // 전화번호 인증 상태
@@ -76,6 +74,11 @@ export default function Register() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<ErrorsType>({});
+
+  // 태그 카테고리별 getter
+  const mbtiTags = useMemo(() => categorizedTags?.MBTI || [], [categorizedTags]);
+  const interestTags = useMemo(() => categorizedTags?.INTEREST || [], [categorizedTags]);
+  const hobbyTags = useMemo(() => categorizedTags?.HOBBY || [], [categorizedTags]);
 
   // 컴포넌트 마운트 시 인증 상태 및 태그 목록 조회
   useEffect(() => {
@@ -96,6 +99,13 @@ export default function Register() {
     };
     
     init();
+
+    // Cleanup function
+    return () => {
+      if (Platform.OS === 'web' && image && image.startsWith('blob:')) {
+        URL.revokeObjectURL(image);
+      }
+    };
   }, [isAuthenticated, userId]);
 
   // 태그 목록 조회
@@ -104,11 +114,9 @@ export default function Register() {
       setIsLoading(true);
       const result = await profileApi.getTags();
       
-      // 카테고리별 태그 목록 설정
       if (result) {
-        setMbtiTags(result.MBTI || []);
-        setInterestTags(result.INTEREST || []);
-        setHobbyTags(result.HOBBY || []);
+        console.log("가져온 태그 목록:", result);
+        setCategorizedTags(result);
         setTagsLoaded(true);
       }
     } catch (error) {
@@ -116,21 +124,21 @@ export default function Register() {
       setMessage('태그 목록을 불러오는데 실패했습니다. 기본 태그를 사용합니다.');
       
       // 태그 API 오류 시 기본 태그 사용
-      setMbtiTags([
-        "ENFP", "ENFJ", "ENTP", "ENTJ", 
-        "INFJ", "INFP", "INTP", "INTJ",
-        "ESTP", "ESTJ", "ESFP", "ESFJ",
-        "ISTP", "ISTJ", "ISFP", "ISFJ"
-      ]);
-      
-      setInterestTags([
-        "Cafe", "Food", "SightSeeing", "Activity", "Staycation"
-      ]);
-      
-      setHobbyTags([
-        "Music", "Movie", "Reading", "Sports", "Art",
-        "Gaming", "Hiking", "Photography", "Cooking", "Traveling"
-      ]);
+      setCategorizedTags({
+        "MBTI": [
+          "ENFP", "ENFJ", "ENTP", "ENTJ", 
+          "INFJ", "INFP", "INTP", "INTJ",
+          "ESTP", "ESTJ", "ESFP", "ESFJ",
+          "ISTP", "ISTJ", "ISFP", "ISFJ"
+        ],
+        "INTEREST": [
+          "Cafe", "Food", "SightSeeing", "Activity", "Staycation"
+        ],
+        "HOBBY": [
+          "Music", "Movie", "Reading", "Sports", "Art",
+          "Gaming", "Hiking", "Photography", "Cooking", "Traveling"
+        ]
+      });
       
       setTagsLoaded(true);
     } finally {
@@ -139,31 +147,43 @@ export default function Register() {
   };
   
   // 해시태그 선택/해제
-  const toggleTag = useCallback((tag: string) => {
-    setTags((prev) => 
-      prev.includes(tag) 
-        ? prev.filter((t) => t !== tag) 
-        : prev.length < 5 
-          ? [...prev, tag] 
-          : prev
-    );
-  }, []);
+  const toggleTag = useCallback((tag: string, category: string) => {
+    setTags((prev) => {
+      // MBTI 카테고리인 경우 이전 MBTI 태그를 모두 제거하고 새로운 태그만 추가
+      if (category === 'MBTI') {
+        // 현재 선택된 태그인 경우 해제
+        if (prev.includes(tag)) {
+          return prev.filter(t => !mbtiTags.includes(t));
+        }
+        // 새로운 MBTI 태그 선택 - 이전 MBTI 태그는 모두 제거
+        const filteredTags = prev.filter(t => !mbtiTags.includes(t));
+        return [...filteredTags, tag];
+      } else {
+        // 다른 카테고리는 기존과 동일하게 토글
+        return prev.includes(tag)
+          ? prev.filter(t => t !== tag)
+          : [...prev, tag];
+      }
+    });
+  }, [mbtiTags]);
 
   // 프로필 사진 선택
   const pickImage = async () => {
     try {
-      let result = await ImagePicker.launchImageLibraryAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 1,
+        exif: false,
+        base64: false
       });
 
-      if (!result.canceled) {
-        setImage(result.assets[0].uri);
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const selectedImage = result.assets[0];
+        setImage(selectedImage.uri);
         
-        // 이미지 업로드 처리는 프로필 완성 시에 함께 처리하도록 변경
-        setMessage("이미지가 선택되었습니다. 회원가입 완료 시 업로드됩니다.");
+        setMessage("이미지가 선택되었습니다. 등록 완료 시 업로드됩니다.");
         setTimeout(() => setMessage(""), 3000);
       }
     } catch (error) {
@@ -175,13 +195,12 @@ export default function Register() {
   // nickName 중복 검사
   const checkNickName = async () => {
     if (!nickName.trim()) {
-      setErrors(prev => ({ ...prev, nickname: "닉네임을 입력해주세요." }));
+      setErrors(prev => ({ ...prev, nickname: "Please enter a nickname." }));
       return;
     }
     
     try {
       setIsLoading(true);
-      // 새로운 API 함수 사용
       const response = await profileApi.checkNickname(nickName);
 
       if (response.available) {
@@ -218,6 +237,14 @@ export default function Register() {
     return date.toISOString().split('T')[0];
   };
 
+  // 날짜를 사용자 친화적인 형식으로 변환
+  const formatDateForDisplay = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${month}/${day}/${year}`;
+  };
+
   // 전화번호 형식 포맷팅
   const formatPhoneNumber = (input: string): string => {
     const numbers = input.replace(/[^0-9]/g, "");
@@ -235,22 +262,22 @@ export default function Register() {
   // 전화번호 인증 코드 발송
   const sendVerificationCode = async () => {
     if (!phone.trim()) {
-      setErrors(prev => ({ ...prev, phone: "전화번호를 입력해주세요." }));
+      setErrors(prev => ({ ...prev, phone: "Please enter a phone number." }));
       return;
     }
   
     if (!userId) {
-      console.error('사용자 ID가 없습니다:', userId);
-      setMessage("사용자 인증에 문제가 발생했습니다. 다시 로그인해주세요.");
+      console.error('User ID not found:', userId);
+      setMessage("인증 오류. 다시 로그인해주세요.");
       return;
     }
   
     try {
       setIsLoading(true);
-      setMessage("인증 코드를 발송하고 있습니다...");
+      setMessage("인증 코드 전송 중...");
   
       const formattedPhone = formatPhoneNumber(phone);
-      console.log(`인증 코드 발송 중: ${formattedPhone}, userId: ${userId}`);
+      console.log(`인증 코드 전송: ${formattedPhone}, userId: ${userId}`);
   
       const authHeader = await getAuthHeader();
       const response = await api.post(
@@ -259,23 +286,25 @@ export default function Register() {
           phoneNumber: formattedPhone,
           userId: userId
         },
-        authHeader
+        {
+          headers: authHeader.headers
+        }
       );
   
       if (response.data.success) {
         setIsCodeSent(true);
-        setMessage("인증 코드가 발송되었습니다. 휴대폰을 확인해주세요.");
+        setMessage("인증 코드가 전송되었습니다. 휴대폰을 확인해주세요.");
         
         if (response.data.expiresInSeconds) {
           setRemainingSeconds(response.data.expiresInSeconds);
           startCooldownTimer();
         }
       } else {
-        throw new Error(response.data.message || "인증 코드 발송에 실패했습니다.");
+        throw new Error(response.data.message || "인증 코드 전송에 실패했습니다.");
       }
     } catch (error) {
-      console.error("인증 코드 발송 오류:", error);
-      setMessage("인증 코드 발송에 실패했습니다. 다시 시도해주세요.");
+      console.error("인증 코드 전송 오류:", error);
+      setMessage("인증 코드 전송에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -284,22 +313,22 @@ export default function Register() {
   // 인증 코드 확인
   const verifyCode = async () => {
     if (!code.trim()) {
-      setErrors(prev => ({ ...prev, code: "인증 코드를 입력해주세요." }));
+      setErrors(prev => ({ ...prev, code: "Please enter the verification code." }));
       return false;
     }
   
     if (!userId) {
-      console.error('사용자 ID가 없습니다:', userId);
-      setMessage("사용자 인증에 문제가 발생했습니다. 다시 로그인해주세요.");
+      console.error('User ID not found:', userId);
+      setMessage("인증 오류. 다시 로그인해주세요.");
       return false;
     }
   
     try {
       setIsLoading(true);
-      setMessage("인증 코드를 확인하고 있습니다...");
+      setMessage("인증 코드 확인 중...");
   
       const formattedPhone = formatPhoneNumber(phone);
-      console.log(`인증 코드 확인 중: ${formattedPhone}, userId: ${userId}`);
+      console.log(`인증 코드 확인: ${formattedPhone}, userId: ${userId}`);
   
       const authHeader = await getAuthHeader();
       const response = await api.post(
@@ -309,18 +338,20 @@ export default function Register() {
           code: code,
           userId: userId
         },
-        authHeader
+        {
+          headers: authHeader.headers
+        }
       );
   
       if (response.data.success) {
-        setMessage("휴대폰 인증이 완료되었습니다!");
+        setMessage("전화번호 인증이 완료되었습니다!");
         setPhoneVerified(true);
         
         try {
           await updatePhoneVerificationStatus();
           await checkAuthStatus();
         } catch (updateError) {
-          console.error("휴대폰 인증 상태 업데이트 중 오류 발생:", updateError);
+          console.error("전화번호 인증 상태 업데이트 오류:", updateError);
         }
         
         return true;
@@ -340,32 +371,29 @@ export default function Register() {
   const updatePhoneVerificationStatus = async () => {
     try {
       if (!userId) {
-        console.error("사용자 ID가 없습니다:", userId);
-        throw new Error("사용자 ID가 없습니다.");
+        console.error("User ID not found:", userId);
+        throw new Error("User ID not found.");
       }
   
-      console.log("휴대폰 인증 상태 업데이트 중 - userId:", userId);
+      console.log("전화번호 인증 상태 업데이트 - userId:", userId);
       
       const authHeader = await getAuthHeader();
       const response = await api.post(
         `/api/users/${userId}/verifyPhone`,
         { phoneNumber: formatPhoneNumber(phone) },
         {
-          withCredentials: true,
-          headers: {
-            ...authHeader.headers
-          }
+          headers: authHeader.headers
         }
       );
       
       if (!response.data.success) {
-        throw new Error(response.data.message || "인증 상태 업데이트에 실패했습니다.");
+        throw new Error(response.data.message || "전화번호 인증 상태 업데이트에 실패했습니다.");
       }
   
-      console.log("휴대폰 인증 상태가 성공적으로 업데이트되었습니다.");
+      console.log("전화번호 인증 상태가 성공적으로 업데이트되었습니다.");
       return true;
     } catch (error) {
-      console.error("휴대폰 인증 상태 업데이트 오류:", error);
+      console.error("전화번호 인증 상태 업데이트 오류:", error);
       throw error;
     }
   };
@@ -386,7 +414,7 @@ export default function Register() {
   // 인증 코드 재전송
   const resendVerificationCode = async () => {
     if (remainingSeconds > 0) {
-      setMessage(`재전송 전 ${remainingSeconds}초 대기해주세요.`);
+      setMessage(`재전송 대기 시간: ${remainingSeconds}초`);
       return;
     }
     
@@ -398,14 +426,14 @@ export default function Register() {
   const validateForm = () => {
     const newErrors: ErrorsType = {};
     
-    if (!nickNameCheck) newErrors.nickname = "닉네임 중복 확인을 해주세요.";
-    if (!nickName.trim()) newErrors.nickname = "닉네임을 입력해주세요.";
-    if (!bio.trim()) newErrors.bio = "자기소개를 입력해주세요.";
-    if (tags.length === 0) newErrors.tags = "하나 이상의 해시태그를 선택해주세요.";
-    if (!gender) newErrors.gender = "성별을 선택해주세요.";
-    if (!phoneVerified) newErrors.phone = "휴대폰 인증을 완료해주세요.";
-    if (!birthDate) newErrors.birthDate = "생년월일을 선택해주세요.";
-    if (!image) newErrors.image = "프로필 사진을 선택해주세요.";
+    if (!nickNameCheck) newErrors.nickname = "Please verify your nickname.";
+    if (!nickName.trim()) newErrors.nickname = "Please enter a nickname.";
+    if (!bio.trim()) newErrors.bio = "Please enter your bio.";
+    if (tags.length === 0) newErrors.tags = "Please select at least one tag.";
+    if (!gender) newErrors.gender = "Please select your gender.";
+    if (!phoneVerified) newErrors.phone = "Please verify your phone number.";
+    if (!birthDate) newErrors.birthDate = "Please select your date of birth.";
+    if (!image) newErrors.image = "Please select a profile photo.";
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -416,46 +444,32 @@ export default function Register() {
     if (!validateForm()) return;
     
     setIsSubmitting(true);
-    setMessage("프로필을 생성하고 있습니다...");
+    setMessage("Creating profile...");
     
     try {
-      // 프로필 데이터 준비
-      const profileData = {
+      const profileSetupDto = {
         nickname: nickName,
         bio,
         gender,
-        birthDate: birthDate.toISOString().split("T")[0],
+        birthDate: formatDate(birthDate),
         tags
       };
 
-      console.log('회원가입 요청 데이터:', profileData);
-      console.log('프로필 이미지:', image ? '이미지 있음' : '이미지 없음');
+      console.log('Registration request data:', profileSetupDto);
+      console.log('Profile image:', image ? 'Image selected' : 'No image');
 
-      // 새로운 API 함수 사용
-      const response = await profileApi.setupProfile(profileData, image);
-      console.log('회원가입 응답:', response);
+      const response = await profileApi.setupProfile(profileSetupDto, image);
+      console.log('Registration response:', response);
 
-      // 회원가입 성공 시 AuthContext 갱신
       await checkAuthStatus();
 
-      Alert.alert(
-        "회원가입 완료",
-        "프로필이 성공적으로 생성되었습니다!",
-        [
-          {
-            text: "계속하기",
-            onPress: () => {
-              console.log("홈으로 이동 시도...");
-              // 홈화면으로 이동 - 정확한 라우트 사용
-              router.replace('/(tabs)');
-            }
-          }
-        ]
-      );
+      // 회원가입 완료 후 바로 홈 화면으로 이동
+      console.log("회원가입 완료! 홈 화면으로 이동합니다.");
+      router.replace('/(tabs)');
     } catch (err) {
-      console.error('회원가입 오류:', err);
-      setMessage("회원가입에 실패했습니다. 다시 시도해주세요.");
-      setErrors(prev => ({ ...prev, submit: "회원가입 실패" }));
+      console.error('Registration error:', err);
+      setMessage("Registration failed. Please try again.");
+      setErrors(prev => ({ ...prev, submit: "Registration failed" }));
     } finally {
       setIsSubmitting(false);
     }
@@ -480,7 +494,7 @@ export default function Register() {
               <Text style={styles.headerSubtitle}>Set up your profile to connect with travel buddies</Text>
             </View>
 
-            {/* 프로필 이미지 섹션 */}
+            {/* Profile Image Section */}
             <View style={styles.profileImageContainer}>
               <TouchableOpacity onPress={pickImage} style={styles.profileImageButton}>
                 {image ? (
@@ -494,16 +508,16 @@ export default function Register() {
                   <FontAwesome name="camera" size={16} color="#fff" />
                 </View>
               </TouchableOpacity>
-              <Text style={styles.profileImageText}>프로필 사진 설정</Text>
+              <Text style={styles.profileImageText}>Profile Photo</Text>
               {!image && errors.image && <Text style={styles.errorText}>{errors.image}</Text>}
             </View>
 
-            {/* 상태 메시지 표시 */}
+            {/* Status Message */}
             {message ? (
               <View style={styles.messageContainer}>
                 <Text style={[
                   styles.message,
-                  message.includes('fail') || message.includes('error') || message.includes('invalid')
+                  message.includes('failed') || message.includes('error')
                     ? styles.errorMessage
                     : styles.successMessage
                 ]}>
@@ -513,7 +527,7 @@ export default function Register() {
             ) : null}
 
             <View style={styles.formContainer}>
-              {/* 닉네임 입력 */}
+              {/* Nickname Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Nickname</Text>
                 <View style={styles.nickNameContainer}>
@@ -523,7 +537,7 @@ export default function Register() {
                       setNickName(text);
                       setNickNameCheck(false);
                     }}
-                    placeholder="Enter your nickname (max 10 chars)"
+                    placeholder="Enter nickname (max 10 chars)"
                     placeholderTextColor="#aaa"
                     maxLength={10}
                     style={[
@@ -553,7 +567,7 @@ export default function Register() {
                 {errors.nickname && <Text style={styles.errorText}>{errors.nickname}</Text>}
               </View>
 
-              {/* 자기소개 입력 */}
+              {/* Bio Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Bio</Text>
                 <TextInput
@@ -573,21 +587,21 @@ export default function Register() {
                 <Text style={styles.charCount}>{bio.length}/20</Text>
               </View>
 
-              {/* 해시태그 선택 */}
+              {/* Hashtag Selection */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Hashtags</Text>
                 <Text style={styles.inputSubLabel}>
                   Choose hashtags that represent you (max 5)
                 </Text>
                 
-                {/* MBTI 태그 - API에서 가져온 태그로 대체 */}
+                {/* MBTI Tags */}
                 <View style={styles.tagSection}>
-                  <Text style={styles.tagCategory}>MBTI Types</Text>
+                  <Text style={styles.tagCategory}>MBTI Types (Select one)</Text>
                   <View style={styles.tagsContainer}>
                     {tagsLoaded ? mbtiTags.map((tag) => (
                       <TouchableOpacity
                         key={tag}
-                        onPress={() => toggleTag(tag)}
+                        onPress={() => toggleTag(tag, 'MBTI')}
                         style={[
                           styles.tagButton,
                           styles.mbtiTag,
@@ -602,14 +616,14 @@ export default function Register() {
                   </View>
                 </View>
                 
-                {/* 여행 관심사 - API에서 가져온 태그로 대체 */}
+                {/* Travel Interests */}
                 <View style={styles.tagSection}>
                   <Text style={styles.tagCategory}>Travel Interests</Text>
                   <View style={styles.tagsContainer}>
                     {tagsLoaded ? interestTags.map((tag) => (
                       <TouchableOpacity
                         key={tag}
-                        onPress={() => toggleTag(tag)}
+                        onPress={() => toggleTag(tag, 'INTEREST')}
                         style={[
                           styles.tagButton,
                           tags.includes(tag) ? styles.tagSelected : styles.tagUnselected
@@ -623,14 +637,14 @@ export default function Register() {
                   </View>
                 </View>
                 
-                {/* 취미 태그 - API에서 가져온 태그로 대체 */}
+                {/* Hobby Tags */}
                 <View style={styles.tagSection}>
                   <Text style={styles.tagCategory}>Hobbies</Text>
                   <View style={styles.tagsContainer}>
                     {tagsLoaded ? hobbyTags.map((tag) => (
                       <TouchableOpacity
                         key={tag}
-                        onPress={() => toggleTag(tag)}
+                        onPress={() => toggleTag(tag, 'HOBBY')}
                         style={[
                           styles.tagButton,
                           tags.includes(tag) ? styles.tagSelected : styles.tagUnselected
@@ -648,7 +662,7 @@ export default function Register() {
                 <Text style={styles.tagCount}>{tags.length}/5 selected</Text>
               </View>
 
-              {/* 성별 선택 */}
+              {/* Gender Selection */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Gender</Text>
                 <View style={[
@@ -660,7 +674,7 @@ export default function Register() {
                     onValueChange={setGender}
                     style={styles.picker}
                   >
-                    <Picker.Item label="Select your gender" value="" />
+                    <Picker.Item label="Select gender" value="" />
                     <Picker.Item label="Male" value="male" />
                     <Picker.Item label="Female" value="female" />
                     <Picker.Item label="Other" value="other" />
@@ -669,35 +683,45 @@ export default function Register() {
                 {errors.gender && <Text style={styles.errorText}>{errors.gender}</Text>}
               </View>
 
-              {/* 생년월일 선택 */}
+              {/* Date of Birth Selection */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Date of Birth</Text>
                 {Platform.OS === "web" ? (
-                  <View style={[styles.dateInputContainer, errors.birthDate ? styles.inputError : null]}>
-                    <input
-                      type="date"
-                      value={birthDate.toISOString().split("T")[0]}
-                      onChange={(e) => setBirthDate(new Date(e.target.value))}
-                      placeholder="YYYY-MM-DD"
-                      style={{
-                        border: 'none',
-                        outline: 'none',
-                        width: '100%',
-                        height: '50px',
-                        fontSize: '16px',
-                        padding: '0 14px',
-                        color: '#333',
-                        backgroundColor: 'transparent',
-                      }}
-                    />
+                  <View style={[
+                    styles.pickerContainer,
+                    errors.birthDate ? styles.inputError : null
+                  ]}>
+                    <View style={styles.datePickerInnerContainer}>
+                      <Text style={styles.dateText}>{formatDateForDisplay(birthDate)}</Text>
+                      <Ionicons name="calendar-outline" size={20} color="#666" />
+                      <input
+                        id="birth-date-input"
+                        type="date"
+                        value={formatDate(birthDate)}
+                        onChange={(e) => setBirthDate(new Date(e.target.value))}
+                        max={formatDate(new Date())}
+                        style={{
+                          position: 'absolute',
+                          width: '100%',
+                          height: '100%',
+                          opacity: 0,
+                          cursor: 'pointer',
+                        }}
+                      />
+                    </View>
                   </View>
                 ) : (
                   <TouchableOpacity 
-                    style={[styles.datePickerButton, errors.birthDate ? styles.inputError : null]}
+                    style={[
+                      styles.pickerContainer,
+                      errors.birthDate ? styles.inputError : null
+                    ]}
                     onPress={toggleDatePicker}
                   >
-                    <Text style={styles.dateText}>{formatDate(birthDate)}</Text>
-                    <Ionicons name="calendar-outline" size={20} color="#666" />
+                    <View style={styles.datePickerInnerContainer}>
+                      <Text style={styles.dateText}>{formatDateForDisplay(birthDate)}</Text>
+                      <Ionicons name="calendar-outline" size={20} color="#666" />
+                    </View>
                   </TouchableOpacity>
                 )}
                 {showDatePicker && Platform.OS !== "web" && (
@@ -712,14 +736,14 @@ export default function Register() {
                 {errors.birthDate && <Text style={styles.errorText}>{errors.birthDate}</Text>}
               </View>
 
-              {/* 전화번호 인증 섹션 */}
+              {/* Phone Verification Section */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Phone Verification</Text>
                 <Text style={styles.inputSubLabel}>
                   Verify your phone number for secure access
                 </Text>
 
-                {/* 전화번호 입력 */}
+                {/* Phone Number Input */}
                 {!isCodeSent ? (
                   <View>
                     <View style={styles.phoneContainer}>
@@ -758,7 +782,7 @@ export default function Register() {
                     {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
                   </View>
                 ) : (
-                  // 인증 코드 입력
+                  // Verification Code Input
                   <View>
                     <View style={[
                       styles.codeContainer,
@@ -794,7 +818,7 @@ export default function Register() {
                     </View>
                     {errors.code && <Text style={styles.errorText}>{errors.code}</Text>}
                     
-                    {/* 타이머 및 재전송 버튼 - 인증 완료 시 표시하지 않음 */}
+                    {/* Timer and Resend Button */}
                     {!phoneVerified && (
                       <View style={styles.timerContainer}>
                         <Text style={styles.timerText}>
@@ -824,7 +848,7 @@ export default function Register() {
               </View>
             </View>
 
-            {/* 제출 버튼 */}
+            {/* Submit Button */}
             <TouchableOpacity
               onPress={submitRegistration}
               disabled={isSubmitting || !phoneVerified || !image}
@@ -836,18 +860,18 @@ export default function Register() {
               {isSubmitting ? (
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
-                <Text style={styles.submitButtonText}>회원가입 완료</Text>
+                <Text style={styles.submitButtonText}>Complete Registration</Text>
               )}
             </TouchableOpacity>
             {errors.submit && <Text style={styles.submitErrorText}>{errors.submit}</Text>}
             {!phoneVerified && (
               <Text style={styles.verificationReminder}>
-                휴대폰 인증을 완료해야 회원가입이 가능합니다
+                Phone verification is required to complete registration
               </Text>
             )}
             {!image && (
               <Text style={styles.verificationReminder}>
-                프로필 사진을 등록해야 회원가입이 가능합니다
+                Profile photo is required to complete registration
               </Text>
             )}
           </ScrollView>
@@ -1105,6 +1129,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginTop: 8,
     overflow: 'hidden',
+    height: 50,
   },
   picker: {
     height: 50,
@@ -1118,6 +1143,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     backgroundColor: '#fff',
+    height: 50,
+    position: 'relative',
+    marginTop: 8,
+  },
+  datePickerInnerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    height: 50,
+    width: '100%',
+    position: 'relative',
   },
   dateText: {
     fontSize: 16,
@@ -1256,11 +1293,30 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 12,
     backgroundColor: '#fff',
+    height: 50,
+    width: '100%',
     overflow: 'hidden',
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
-  }
+  },
+  customDateInput: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    height: 50,
+    paddingHorizontal: 16,
+    width: '100%',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
 });
