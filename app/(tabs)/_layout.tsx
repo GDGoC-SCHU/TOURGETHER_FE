@@ -2,7 +2,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useAuth } from '@/context/authContext';
-import { Feather, MaterialIcons, MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
+import { Feather, MaterialIcons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import Colors from '@/constants/Colors';
 
 /**
  * 탭 네비게이션 레이아웃 컴포넌트
@@ -21,52 +22,110 @@ function TabsLayout() {
     <Tabs screenOptions={{
       headerShown: false,
       tabBarStyle: { 
-        backgroundColor: '#fff',
-        borderTopColor: '#eee',
+        backgroundColor: Colors.light.card,
+        borderTopColor: Colors.light.border,
         borderTopWidth: 1,
-        height: 60,
+        height: 65,
+        paddingBottom: 8,
+        paddingTop: 5,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 8,
       },
-      tabBarActiveTintColor: '#3897f0',
+      tabBarActiveTintColor: Colors.light.accent,
       tabBarInactiveTintColor: '#888',
       tabBarLabelStyle: {
-        fontSize: 10,
-        marginBottom: 5,
+        fontSize: 11,
+        fontWeight: '500',
+        marginBottom: 0,
       }
     }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: '홈',
-          tabBarIcon: ({ color }) => (
-            <Feather name="home" size={24} color={color} />
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              backgroundColor: focused ? Colors.light.accent + '20' : 'transparent',
+              width: 50,
+              height: 30,
+              borderRadius: 15,
+              marginBottom: 2,
+            }}>
+              <Feather name="compass" size={22} color={color} />
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="board"
         options={{
-          title: '게시판',
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="chat-bubble-outline" size={24} color={color} />
+          title: 'Board',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              backgroundColor: focused ? Colors.light.accent + '20' : 'transparent',
+              width: 50,
+              height: 30,
+              borderRadius: 15,
+              marginBottom: 2,
+            }}>
+              <MaterialIcons name="explore" size={22} color={color} />
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="chat"
         options={{
-          title: '채팅',
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="chat-outline" size={24} color={color} />
+          title: 'Chat',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              backgroundColor: focused ? Colors.light.accent + '20' : 'transparent',
+              width: 50,
+              height: 30,
+              borderRadius: 15,
+            }}>
+              <MaterialCommunityIcons name="message-text-outline" size={22} color={color} />
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="mypage"
         options={{
-          title: '마이페이지',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome name="user-circle-o" size={24} color={color} />
+          title: 'My Page',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              backgroundColor: focused ? Colors.light.accent + '20' : 'transparent',
+              width: 50,
+              height: 30,
+              borderRadius: 15,
+            }}>
+              <FontAwesome5 name="user-alt" size={20} color={color} />
+            </View>
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="CreatingPlan"
+        options={{
+          href: null, // This screen will not be accessible from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="PlanResult"
+        options={{
+          href: null, // This screen will not be accessible from tab bar
         }}
       />
     </Tabs>

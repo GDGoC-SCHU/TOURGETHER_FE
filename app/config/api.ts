@@ -135,4 +135,109 @@ export const isLoggedIn = () => {
   }
 };
 
+// 프로필 관련 API 함수
+export const profileApi = {
+  // 닉네임 중복 확인
+  checkNickname: async (nickname: string) => {
+    try {
+      const response = await api.get('/api/user/nickname', {
+        params: { nickname }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('닉네임 중복 확인 오류:', error);
+      throw error;
+    }
+  },
+
+  // 태그 목록 조회
+  getTags: async () => {
+    try {
+      const response = await api.get('/api/tags');
+      return response.data;
+    } catch (error) {
+      console.error('태그 목록 조회 오류:', error);
+      throw error;
+    }
+  },
+
+  // 프로필 설정 (회원가입 완료)
+  setupProfile: async (profileData: any, profileImage: any) => {
+    try {
+      const formData = new FormData();
+      
+      // Platform 별로 다른 처리
+      if (Platform.OS === 'web') {
+        // 웹 환경에서는 JSON을 Blob으로 변환
+        const profileBlob = new Blob([JSON.stringify(profileData)], { type: 'application/json' });
+        formData.append('profileData', profileBlob);
+      } else {
+        // React Native 환경에서는 문자열로 변환
+        formData.append('profileData', JSON.stringify(profileData));
+      }
+      
+      // 이미지가 있는 경우 추가
+      if (profileImage) {
+        const imageFile = Platform.OS === 'web' 
+          ? profileImage // 웹에서는 File 객체 그대로 사용
+          : {            // React Native에서는 객체 형태로 전달
+              uri: profileImage,
+              type: 'image/jpeg',
+              name: 'profile-image.jpg',
+            };
+        
+        formData.append('profileImage', imageFile as any);
+      }
+      
+      console.log('프로필 설정 요청 데이터:', JSON.stringify(profileData));
+      
+      const response = await api.post('/api/user/register', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      console.log('프로필 설정 응답:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('프로필 설정 오류:', error);
+      throw error;
+    }
+  },
+
+  // 프로필 조회
+  getProfile: async (userId?: number) => {
+    try {
+      const endpoint = userId ? `/api/profile/${userId}` : '/api/profile/me';
+      const response = await api.get(endpoint);
+      return response.data;
+    } catch (error) {
+      console.error('프로필 조회 오류:', error);
+      throw error;
+    }
+  }
+};
+
+// 파일 관련 API 함수
+export const fileApi = {
+  // 프로필 이미지 업로드
+  uploadProfileImage: async (userId: number, imageFile: any) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      
+      const response = await api.put(`/api/profile/${userId}/image`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('프로필 이미지 업로드 오류:', error);
+      throw error;
+    }
+  }
+};
+
 export default api; 

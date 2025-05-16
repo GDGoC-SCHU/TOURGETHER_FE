@@ -12,7 +12,7 @@ export default function LoginSuccessPage() {
         if (mode === "signup") {
           router.replace("/auth/Register");
         } else {
-          router.replace("/pages/Home");
+          router.replace("/(tabs)");
         }
       });
     }

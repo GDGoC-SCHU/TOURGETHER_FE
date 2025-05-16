@@ -133,9 +133,9 @@ export function AuthMiddlewareProvider({children}: { children: React.ReactNode }
       
       // 전화번호 인증이 필요한 경우
       if (urlNeedPhoneVerification) {
-        if (!inAuthGroup || (inAuthGroup && segments[1] !== 'VerifyPhone')) {
-          console.log('URL 파라미터: 전화번호 인증 페이지로 이동');
-          safeNavigate('/auth/VerifyPhone');
+        if (!inAuthGroup || (inAuthGroup && segments[1] !== 'Register')) {
+          console.log('URL 파라미터: Register 페이지로 이동');
+          safeNavigate('/auth/Register');
         }
         return;
       } else if (inAuthGroup || inRootPath) {
@@ -148,11 +148,11 @@ export function AuthMiddlewareProvider({children}: { children: React.ReactNode }
     if (isAuthenticated) {
       // 인증된 사용자
       if (needPhoneVerification) {
-        // 전화번호 인증이 필요하면 전화번호 인증 페이지로
-        if (!inAuthGroup || (inAuthGroup && segments[1] !== 'VerifyPhone')) {
-          console.log('전화번호 인증 페이지로 이동 시도');
+        // 전화번호 인증이 필요하면 Register 페이지로
+        if (!inAuthGroup || (inAuthGroup && segments[1] !== 'Register')) {
+          console.log('Register 페이지로 이동 시도');
           try {
-            safeNavigate('/auth/VerifyPhone');
+            safeNavigate('/auth/Register');
           } catch (error) {
             console.error('라우팅 오류:', error);
           }
@@ -178,9 +178,9 @@ export function AuthMiddlewareProvider({children}: { children: React.ReactNode }
         } catch (error) {
           console.error('라우팅 오류:', error);
         }
-      } else if (inAuthGroup && segments[1] === 'VerifyPhone') {
-        // 인증되지 않은 상태에서 전화번호 인증 페이지면 로그인으로
-        console.log('인증되지 않은 사용자: 전화번호 인증 페이지 접근 시도, 로그인으로 이동 시도');
+      } else if (inAuthGroup && segments[1] === 'Register') {
+        // 인증되지 않은 상태에서 Register 페이지면 로그인으로
+        console.log('인증되지 않은 사용자: Register 페이지 접근 시도, 로그인으로 이동 시도');
         try {
           safeNavigate('/auth/LoginScreen');
         } catch (error) {

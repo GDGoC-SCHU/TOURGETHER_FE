@@ -1,45 +1,110 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { styles } from "@/styles/ViewStyle";
-import { useRouter } from "expo-router";
-import Feather from "@expo/vector-icons/Feather";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { useRouter, usePathname } from "expo-router";
+import { Feather, MaterialIcons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import Colors from "@/constants/Colors";
 
 /**
- * 앱 하단 네비게이션 바 컴포넌트
- * 홈, 게시판, 채팅, 마이페이지로 이동할 수 있는 아이콘 버튼을 제공합니다.
+ * App Bottom Navigation Bar Component
+ * Provides icon buttons to navigate to Home, Board, Chat, and My Page.
+ * Styled to match the tabs navigation bar in design.
  */
 export default function NavBar() {
   const router = useRouter();
+  const pathname = usePathname();
   
-  // 네비게이션 아이템 정의
+  // Define navigation items
   const navItems = [
-    { name: "HOME", icon: <Feather name="home" size={24} color="black" />, path: "/(tabs)" },
-    { name: "BOARD", icon: <MaterialIcons name="chat-bubble-outline" size={24} color="black" />, path: "/pages/Home" },
-    { name: "CHAT", icon: <MaterialCommunityIcons name="chat-outline" size={24} color="black" />, path: "/pages/Home" },
-    { name: "MY", icon: <FontAwesome name="user-circle-o" size={24} color="black" />, path: "/pages/Home" },
+    { 
+      name: "Home", 
+      icon: (color: string, focused: boolean) => (
+        <Feather name="compass" size={22} color={color} />
+      ),
+      path: "/(tabs)" 
+    },
+    { 
+      name: "Board", 
+      icon: (color: string, focused: boolean) => (
+        <MaterialIcons name="explore" size={22} color={color} />
+      ),
+      path: "/(tabs)/board" 
+    },
+    { 
+      name: "Chat", 
+      icon: (color: string, focused: boolean) => (
+        <MaterialCommunityIcons name="message-text-outline" size={22} color={color} />
+      ),
+      path: "/(tabs)/chat" 
+    },
+    { 
+      name: "My Page", 
+      icon: (color: string, focused: boolean) => (
+        <FontAwesome5 name="user-alt" size={20} color={color} />
+      ),
+      path: "/(tabs)/mypage" 
+    },
   ];
 
-  // 네비게이션 아이템 클릭 핸들러
+  // Navigation item click handler
   const handleNavigation = (path: string) => {
     router.push(path as any);
   };
 
+  // Check if a path is active
+  const isPathActive = (path: string) => {
+    if (path === "/(tabs)" && pathname === "/") return true;
+    
+    // Special case for pages routes
+    if (pathname?.startsWith("/pages/")) {
+      return false; // Pages routes don't match any tab directly
+    }
+    
+    return pathname?.includes(path);
+  };
+
   return (
-    <View style={styles.NavBarContainer}>
+    <View style={[styles.NavBarContainer, { 
+      backgroundColor: Colors.light.card,
+      borderTopColor: Colors.light.border,
+      borderTopWidth: 1,
+      height: 65,
+      paddingBottom: 8,
+      paddingTop: 5,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 8,
+    }]}>
       <View style={styles.NavBar}>
-        {navItems.map((item, index) => (
-          <TouchableOpacity 
-            key={index} 
-            style={styles.NavBarIcon}
-            onPress={() => handleNavigation(item.path)}
-          >
-            {item.icon}
-            <Text style={styles.NavBarText}>{item.name}</Text>
-          </TouchableOpacity>
-        ))}
+        {navItems.map((item, index) => {
+          const isActive = isPathActive(item.path);
+          const iconColor = isActive ? Colors.light.accent : '#888';
+          
+          return (
+            <TouchableOpacity 
+              key={index} 
+              style={[styles.NavBarIcon, { 
+                flex: 1,
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 8,
+              }]}
+              onPress={() => handleNavigation(item.path)}
+            >
+              {item.icon(iconColor, isActive)}
+              <Text style={{
+                color: isActive ? Colors.light.accent : '#888',
+                fontSize: 11,
+                fontWeight: '500',
+              }}>
+                {item.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );

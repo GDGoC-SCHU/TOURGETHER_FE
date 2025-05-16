@@ -1,19 +1,23 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {ActivityIndicator, Platform, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, Platform, StyleSheet, Text, View, Image, ImageBackground} from 'react-native';
 import {useRouter, useLocalSearchParams} from 'expo-router';
 import {useAuth} from '@/context/authContext';
 import { handleKakaoLoginCallback } from './KakaoLogin';
 import { handleGoogleLoginCallback } from './GoogleLogin';
+import { LinearGradient } from 'expo-linear-gradient';
+import Colors from '@/constants/Colors';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 /**
- * 소셜 로그인 콜백 처리 컴포넌트
- * 카카오와 구글 로그인 후 리다이렉트를 처리합니다.
+ * Social Login Callback Handler Component
+ * Handles redirects after Kakao and Google login.
  */
 export default function SocialCallback() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingText, setLoadingText] = useState<string>("Processing login information...");
   const router = useRouter();
-  const {checkAuthStatus, isAuthenticated, needPhoneVerification} = useAuth();
+  const {checkAuthStatus, isAuthenticated, needPhoneVerification, user} = useAuth();
   const params = useLocalSearchParams<{
     userId?: string;
     needPhoneVerification?: string;
@@ -22,211 +26,342 @@ export default function SocialCallback() {
   const isMounted = useRef(true);
   const navigationTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // 안전한 네비게이션 함수
+  // Safe navigation function
   const safeNavigate = (path: any, delay: number = 300) => {
-    // 이전 타이머가 있으면 취소
+    // Cancel previous timer if exists
     if (navigationTimeout.current) {
       clearTimeout(navigationTimeout.current);
     }
     
-    // 새로운 타이머 설정
+    // Set new timer
     navigationTimeout.current = setTimeout(() => {
       if (isMounted.current) {
         try {
           router.replace(path);
         } catch (error) {
-          console.error('네비게이션 오류:', error);
+          console.error('Navigation error:', error);
         }
       }
     }, delay);
   };
 
   useEffect(() => {
-    // 컴포넌트 마운트 상태 설정
+    // Set component mount state
     isMounted.current = true;
     
+    // Timer for changing loading text
+    const textTimer1 = setTimeout(() => {
+      if (isMounted.current) {
+        setLoadingText("Verifying user information...");
+      }
+    }, 1000);
+    
+    const textTimer2 = setTimeout(() => {
+      if (isMounted.current) {
+        setLoadingText("Authentication complete. Redirecting...");
+      }
+    }, 2000);
+    
     async function handleCallback() {
-      console.log('SocialCallback 컴포넌트 로드됨');
-      console.log('URL 파라미터:', params);
+      console.log('SocialCallback component loaded');
+      console.log('URL parameters:', params);
 
       if (Platform.OS !== 'web') {
-        console.log('모바일 환경 감지, 홈으로 이동');
+        console.log('Mobile environment detected, navigating to home');
         safeNavigate('/');
         return;
       }
 
       try {
-        // URL에서 직접 파라미터 확인 (useLocalSearchParams가 작동하지 않는 경우를 위해)
+        // Check parameters directly from URL (in case useLocalSearchParams doesn't work)
         const urlParams = new URLSearchParams(window.location.search);
         const urlUserId = urlParams.get('userId');
         const urlNeedPhoneVerification = urlParams.get('needPhoneVerification');
         const urlAccessToken = urlParams.get('accessToken');
         
-        console.log('URL에서 직접 파라미터 확인:', { 
+        console.log('Direct URL parameter check:', { 
           userId: urlUserId, 
           needPhoneVerification: urlNeedPhoneVerification,
-          accessToken: urlAccessToken ? '존재함' : '없음'
+          accessToken: urlAccessToken ? 'exists' : 'not found'
         });
 
-        // URL에 파라미터가 있으면 바로 처리
+        // Process parameters directly from URL if available
         if (urlUserId && urlAccessToken) {
-          console.log('URL 파라미터로 리다이렉트 처리');
+          console.log('Processing redirect with URL parameters');
           
-          // URL에서 파라미터 제거 (깔끔한 URL 유지)
+          // Remove parameters from URL (keep URL clean)
           if (typeof window !== 'undefined') {
             const cleanUrl = window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
           }
           
-          // 전화번호 인증이 필요한지 확인
+          // Check if phone verification is needed
           if (urlNeedPhoneVerification === 'true') {
-            safeNavigate('/auth/VerifyPhone');
+            safeNavigate('/auth/Register');
           } else {
             safeNavigate('/(tabs)');
           }
           return;
         }
 
-        // 소셜 로그인 콜백 처리 시도
+        // Try to process social login callback
         const kakaoResult = handleKakaoLoginCallback();
         const googleResult = handleGoogleLoginCallback();
         const loginResult = kakaoResult || googleResult;
 
-        // 콜백에서 로그인 정보를 가져온 경우
+        // If login info was retrieved from callback
         if (loginResult) {
-          console.log('소셜 로그인 콜백 처리 완료:', loginResult);
+          console.log('Social login callback processed:', loginResult);
           
-          // 전화번호 인증이 필요한지 확인
+          // Check if phone verification is needed
           if (loginResult.user.needPhoneVerification) {
-            safeNavigate('/auth/VerifyPhone');
+            safeNavigate('/auth/Register');
           } else {
             safeNavigate('/(tabs)');
           }
           return;
         }
         
-        // 서버에 인증 상태 확인 요청 (쿠키 기반)
-        console.log('서버에 인증 상태 확인 요청');
+        // Request authentication status from server (cookie-based)
+        console.log('Requesting authentication status from server');
         const authStatus = await checkAuthStatus();
         
-        console.log('인증 상태 확인 완료:', { 
+        console.log('Authentication status check complete:', { 
           isAuthenticated, 
           needPhoneVerification,
           authStatus
         });
         
-        // URL에서 쿼리 파라미터 제거 (보안)
-        // SSR 환경에서는 window 객체가 없으므로 조건부 처리
+        // Remove query parameters from URL (security)
+        // Conditional handling for SSR environment where window object may not exist
         if (typeof window !== 'undefined' && window.location) {
           const cleanUrl = window.location.origin + window.location.pathname;
           window.history.replaceState({}, document.title, cleanUrl);
         }
         
-        // 인증 상태에 따라 적절한 화면으로 이동
+        // Navigate to appropriate screen based on authentication status
         if (isAuthenticated) {
-          console.log('인증됨, 리다이렉트 처리');
+          console.log('Authenticated, processing redirect');
           if (needPhoneVerification) {
-            safeNavigate('/auth/VerifyPhone');
+            safeNavigate('/auth/Register');
           } else {
             safeNavigate('/(tabs)');
           }
         } else {
-          // URL 파라미터 확인 (OAuth2SuccessHandler에서 추가된 경우)
+          // Check URL parameters (added by OAuth2SuccessHandler)
           if (params.userId) {
-            console.log('params에서 userId 발견:', params.userId);
-            // 전화번호 인증이 필요한지 확인
+            console.log('userId found in params:', params.userId);
+            // Check if phone verification is needed
             if (params.needPhoneVerification === 'true') {
-              safeNavigate('/auth/VerifyPhone');
+              safeNavigate('/auth/Register');
             } else {
               safeNavigate('/(tabs)');
             }
           } else {
-            // 인증 실패 시 로그인 페이지로
-            console.log('인증 실패, 로그인 페이지로 리다이렉트');
-            setError('인증에 실패했습니다. 다시 로그인해주세요.');
+            // Redirect to login page on authentication failure
+            console.log('Authentication failed, redirecting to login page');
+            setError('로그인에 실패했습니다. 다시 시도해주세요.');
             safeNavigate('/auth/LoginScreen', 2000);
           }
         }
       } catch (err) {
-        console.error('소셜 로그인 콜백 처리 오류:', err);
-        setError('인증 정보 처리 중 오류가 발생했습니다.');
+        console.error('Social login callback processing error:', err);
+        setError('An error occurred while processing your authentication.');
         safeNavigate('/auth/LoginScreen', 2000);
       } finally {
         setLoading(false);
       }
     }
 
-    // 약간의 지연 후 콜백 처리 시작
+    // Start callback processing with slight delay
     setTimeout(() => {
       if (isMounted.current) {
         handleCallback();
       }
     }, 100);
 
-    // 컴포넌트 언마운트 시 정리
+    // Cleanup on component unmount
     return () => {
       isMounted.current = false;
       if (navigationTimeout.current) {
         clearTimeout(navigationTimeout.current);
       }
+      clearTimeout(textTimer1);
+      clearTimeout(textTimer2);
     };
   }, []);
 
   if (loading) {
     return (
-        <View style={styles.container}>
-          <ActivityIndicator size="large" color="#3897f0"/>
-          <Text style={styles.text}>로그인 정보를 처리 중입니다...</Text>
-        </View>
+      <ImageBackground
+        source={require('@/assets/images/busan.png')}
+        style={styles.backgroundImage}
+      >
+        <LinearGradient
+          colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.7)']}
+          style={styles.overlay}
+        >
+          <View style={styles.container}>
+            <View style={styles.logoContainer}>
+              <FontAwesome5 name="compass" size={60} color="#fff" />
+            </View>
+            
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#fff" />
+              <Text style={styles.loadingText}>{loadingText}</Text>
+              
+              {user && (
+                <Text style={styles.welcomeText}>
+                  Welcome, {user.displayName || 'traveler'}!
+                </Text>
+              )}
+            </View>
+          </View>
+        </LinearGradient>
+      </ImageBackground>
     );
   }
 
   if (error) {
     return (
-        <View style={styles.container}>
-          <Text style={styles.errorTitle}>로그인 처리 중 오류가 발생했습니다</Text>
-          <Text style={styles.errorMessage}>{error}</Text>
-          <Text style={styles.suggestion}>다시 로그인을 시도해주세요.</Text>
-        </View>
+      <ImageBackground
+        source={require('@/assets/images/busan.png')}
+        style={styles.backgroundImage}
+      >
+        <LinearGradient
+          colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.7)']}
+          style={styles.overlay}
+        >
+          <View style={styles.container}>
+            <View style={styles.errorContainer}>
+              <FontAwesome5 name="exclamation-circle" size={60} color="#fff" style={styles.errorIcon} />
+              <Text style={styles.errorTitle}>Authentication Error</Text>
+              <Text style={styles.errorMessage}>{error}</Text>
+              <Text style={styles.suggestion}>Please try logging in again.</Text>
+            </View>
+          </View>
+        </LinearGradient>
+      </ImageBackground>
     );
   }
 
   return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#3897f0"/>
-        <Text style={styles.text}>인증이 완료되었습니다. 리다이렉트 중...</Text>
-      </View>
+    <ImageBackground
+      source={require('@/assets/images/busan.png')}
+      style={styles.backgroundImage}
+    >
+      <LinearGradient
+        colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.7)']}
+        style={styles.overlay}
+      >
+        <View style={styles.container}>
+          <View style={styles.logoContainer}>
+            <FontAwesome5 name="compass" size={60} color="#fff" />
+          </View>
+          
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={styles.loadingText}>Authentication complete. Redirecting...</Text>
+            
+            {user && (
+              <Text style={styles.welcomeText}>
+                Welcome, {user.displayName || 'traveler'}!
+              </Text>
+            )}
+          </View>
+        </View>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#fff',
   },
-  text: {
+  container: {
+    width: '100%',
+    maxWidth: 400,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: Colors.light.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 40,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+  },
+  loadingText: {
     marginTop: 20,
-    fontSize: 16,
-    color: '#333',
+    fontSize: 18,
+    color: '#fff',
     textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  welcomeText: {
+    marginTop: 20,
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    padding: 30,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 16,
+  },
+  errorIcon: {
+    marginBottom: 20,
   },
   errorTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: 'red',
+    color: '#fff',
     marginBottom: 15,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   errorMessage: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
-    color: '#333',
+    color: '#fff',
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   suggestion: {
     fontSize: 16,
-    color: '#555',
+    color: '#fff',
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
 });

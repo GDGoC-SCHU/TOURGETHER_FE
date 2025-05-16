@@ -8,6 +8,7 @@ interface AuthContextType {
   userId: string | null;
   needPhoneVerification: boolean;
   loading: boolean;
+  user: any | null;
   checkAuthStatus: () => Promise<boolean>;
   logout: () => Promise<void>;
   getAuthHeader: () => Promise<{ headers: { Authorization: string } }>;
@@ -28,6 +29,7 @@ let globalAuthState: AuthContextType = {
   userId: null,
   needPhoneVerification: false,
   loading: true,
+  user: null,
   checkAuthStatus: async () => {
     console.warn('인증 상태 확인 함수는 AuthProvider 내부에서만 사용할 수 있습니다.');
     throw new Error('Auth method not available outside AuthProvider');
@@ -44,7 +46,7 @@ let globalAuthState: AuthContextType = {
 // 초기에 한 번 호출
 export async function loadAuthFromStorage(): Promise<void> {
   try {
-    // 모바일 환경에서만 로컬 스토리지 확인
+    // 모바일 환경에서는 SecureStore 사용
     if (Platform.OS !== 'web') {
       const token = await SecureStore.getItemAsync('accessToken');
       const refreshTokenValue = await SecureStore.getItemAsync('refreshToken');
@@ -66,8 +68,7 @@ export async function loadAuthFromStorage(): Promise<void> {
         };
       }
     } else {
-      // 웹 환경에서는 서버 측 렌더링(SSR)과 클라이언트 측 렌더링을 구분
-      // SSR 환경에서는 API 호출을 건너뜀
+      // 웹 환경에서는 localStorage 사용
       if (typeof window === 'undefined') {
         console.log('SSR 환경 감지: 초기 인증 상태 확인 건너뜀');
         globalAuthState = {
@@ -77,10 +78,39 @@ export async function loadAuthFromStorage(): Promise<void> {
         return;
       }
       
-      // 클라이언트 측에서만 API 호출
+      // 로컬 스토리지에서 토큰 확인
+      const token = localStorage.getItem('accessToken');
+      const userIdValue = localStorage.getItem('userId');
+      const needVerification = localStorage.getItem('needPhoneVerification');
+      
+      if (token) {
+        globalAuthState = {
+          ...globalAuthState,
+          isAuthenticated: true,
+          userId: userIdValue,
+          needPhoneVerification: needVerification === 'true',
+          loading: false
+        };
+        return;
+      }
+      
+      // 토큰이 없으면 API 호출하여 상태 확인
       try {
-        const response = await api.get('/api/auth/status');
-        const { isAuthenticated, userId, needPhoneVerification } = response.data;
+        const response = await api.get('/api/auth/status', { withCredentials: true });
+        const { isAuthenticated, userId, needPhoneVerification, accessToken } = response.data;
+        
+        // 토큰이 응답에 포함된 경우 저장
+        if (accessToken) {
+          localStorage.setItem('accessToken', accessToken);
+        }
+        
+        if (userId) {
+          localStorage.setItem('userId', userId.toString());
+        }
+        
+        if (needPhoneVerification !== undefined) {
+          localStorage.setItem('needPhoneVerification', needPhoneVerification ? 'true' : 'false');
+        }
         
         globalAuthState = {
           ...globalAuthState,
@@ -110,6 +140,7 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
   const [userId, setUserId] = useState<string | null>(globalAuthState.userId);
   const [needPhoneVerification, setNeedPhoneVerification] = useState<boolean>(globalAuthState.needPhoneVerification);
   const [loading, setLoading] = useState<boolean>(globalAuthState.loading);
+  const [user, setUser] = useState<any | null>(null);
 
   // 서버에서 인증 상태 확인 함수
   const checkAuthStatus = async () => {
@@ -122,14 +153,20 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
         const urlParams = new URLSearchParams(window.location.search);
         const urlUserId = urlParams.get('userId');
         const urlNeedPhoneVerification = urlParams.get('needPhoneVerification') === 'true';
+        const urlAccessToken = urlParams.get('accessToken');
         
-        console.log('URL 파라미터 확인:', { urlUserId, urlNeedPhoneVerification });
+        console.log('URL 파라미터 확인:', { urlUserId, urlNeedPhoneVerification, urlAccessToken: urlAccessToken ? 'exists' : 'not found' });
         
-        if (urlUserId) {
+        if (urlUserId && urlAccessToken) {
           console.log('URL에서 인증 정보 발견, 상태 업데이트');
           setIsAuthenticated(true);
           setUserId(urlUserId);
           setNeedPhoneVerification(urlNeedPhoneVerification);
+          
+          // 웹 환경의 로컬 스토리지에 토큰 저장
+          localStorage.setItem('accessToken', urlAccessToken);
+          localStorage.setItem('userId', urlUserId);
+          localStorage.setItem('needPhoneVerification', urlNeedPhoneVerification ? 'true' : 'false');
           
           // 전역 상태 업데이트
           globalAuthState = {
@@ -144,11 +181,45 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
         }
       }
       
+      // 로컬 스토리지나 SecureStore에서 토큰 확인
+      let storedToken = null;
+      let storedUserId = null;
+      let storedNeedPhoneVerification = false;
+      
+      if (Platform.OS === 'web') {
+        storedToken = localStorage.getItem('accessToken');
+        storedUserId = localStorage.getItem('userId');
+        storedNeedPhoneVerification = localStorage.getItem('needPhoneVerification') === 'true';
+      } else {
+        storedToken = await SecureStore.getItemAsync('accessToken');
+        storedUserId = await SecureStore.getItemAsync('userId');
+        storedNeedPhoneVerification = await SecureStore.getItemAsync('needPhoneVerification') === 'true';
+      }
+      
+      // 저장된 토큰이 있으면 인증 상태 업데이트
+      if (storedToken && storedUserId) {
+        console.log('저장된 토큰 발견:', { token: 'exists', userId: storedUserId });
+        setIsAuthenticated(true);
+        setUserId(storedUserId);
+        setNeedPhoneVerification(storedNeedPhoneVerification);
+        
+        // 전역 상태 업데이트
+        globalAuthState = {
+          ...globalAuthState,
+          isAuthenticated: true,
+          userId: storedUserId,
+          needPhoneVerification: storedNeedPhoneVerification
+        };
+        
+        setLoading(false);
+        return true;
+      }
+      
       // 백엔드에 인증 상태 확인 요청
-      const response = await api.get('/api/auth/status');
+      const response = await api.get('/api/auth/status', { withCredentials: true });
       console.log('백엔드 응답:', response.data);
       
-      const { isAuthenticated: authStatus, userId: id, needPhoneVerification: needPhone } = response.data;
+      const { isAuthenticated: authStatus, userId: id, needPhoneVerification: needPhone, accessToken } = response.data;
       
       // 서버에서 받은 userId가 문자열이 아닌 경우 문자열로 변환
       const userIdStr = id !== null && id !== undefined ? id.toString() : null;
@@ -158,17 +229,27 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
       setUserId(userIdStr);
       setNeedPhoneVerification(needPhone || false);
       
-      // 모바일 환경에서는 토큰 정보 로컬 저장 (필요시)
-      if (Platform.OS !== 'web' && authStatus && response.data.accessToken) {
-        await SecureStore.setItemAsync('accessToken', response.data.accessToken);
-        if (response.data.refreshToken) {
-          await SecureStore.setItemAsync('refreshToken', response.data.refreshToken);
+      // 토큰 저장
+      if (authStatus && accessToken) {
+        if (Platform.OS === 'web') {
+          localStorage.setItem('accessToken', accessToken);
+          if (response.data.refreshToken) {
+            localStorage.setItem('refreshToken', response.data.refreshToken);
+          }
+          if (userIdStr) {
+            localStorage.setItem('userId', userIdStr);
+          }
+          localStorage.setItem('needPhoneVerification', needPhone ? 'true' : 'false');
+        } else {
+          await SecureStore.setItemAsync('accessToken', accessToken);
+          if (response.data.refreshToken) {
+            await SecureStore.setItemAsync('refreshToken', response.data.refreshToken);
+          }
+          if (userIdStr) {
+            await SecureStore.setItemAsync('userId', userIdStr);
+          }
+          await SecureStore.setItemAsync('needPhoneVerification', needPhone ? 'true' : 'false');
         }
-        // userId가 있을 경우에만 저장
-        if (userIdStr) {
-          await SecureStore.setItemAsync('userId', userIdStr);
-        }
-        await SecureStore.setItemAsync('needPhoneVerification', needPhone ? 'true' : 'false');
       }
       
       // 전역 상태 업데이트
@@ -193,8 +274,13 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
       setUserId(null);
       setNeedPhoneVerification(false);
       
-      // 모바일 환경에서 토큰 제거
-      if (Platform.OS !== 'web') {
+      // 토큰 제거
+      if (Platform.OS === 'web') {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('needPhoneVerification');
+      } else {
         try {
           await SecureStore.deleteItemAsync('accessToken');
           await SecureStore.deleteItemAsync('refreshToken');
@@ -230,17 +316,26 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
       console.log('로그아웃 시작 - 현재 userId:', userId);
       
       // 백엔드에 로그아웃 요청 (쿠키 삭제)
-      await api.post('/api/auth/logout');
+      const authHeader = await getAuthHeader();
+      await api.post('/api/auth/logout', {}, { 
+        withCredentials: true,
+        headers: authHeader.headers 
+      });
       console.log('백엔드 로그아웃 요청 완료');
       
-      // 모바일 환경에서 저장된 토큰 제거
-      if (Platform.OS !== 'web') {
+      // 토큰 제거
+      if (Platform.OS === 'web') {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('needPhoneVerification');
+      } else {
         await SecureStore.deleteItemAsync('accessToken');
         await SecureStore.deleteItemAsync('refreshToken');
         await SecureStore.deleteItemAsync('userId');
         await SecureStore.deleteItemAsync('needPhoneVerification');
-        console.log('모바일 토큰 삭제 완료');
       }
+      console.log('토큰 삭제 완료');
 
       // 상태 업데이트는 항상 마지막에 수행
       setIsAuthenticated(false);
@@ -262,19 +357,21 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
     }
   };
 
-  // 인증 헤더 가져오기 함수 (모바일 환경용)
+  // 인증 헤더 가져오기 함수
   const getAuthHeader = async () => {
+    let token = '';
+    
     if (Platform.OS !== 'web') {
-      const token = await SecureStore.getItemAsync('accessToken');
+      token = await SecureStore.getItemAsync('accessToken') || '';
+    } else {
+      token = localStorage.getItem('accessToken') || '';
+    }
+    
     return {
       headers: {
-          Authorization: token ? `Bearer ${token}` : ''
+        Authorization: token ? `Bearer ${token}` : ''
       }
     };
-  }
-    
-    // 웹 환경에서는 빈 헤더 반환 (쿠키가 자동으로 전송됨)
-    return { headers: { Authorization: '' } };
   };
 
   // 인증 상태 변경될 때마다 전역 상태 업데이트
@@ -285,17 +382,19 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
       userId,
       needPhoneVerification,
       loading,
+      user,
       checkAuthStatus,
       logout,
       getAuthHeader
     };
-  }, [isAuthenticated, userId, needPhoneVerification, loading]);
+  }, [isAuthenticated, userId, needPhoneVerification, loading, user]);
 
   const value = {
     isAuthenticated,
     userId,
     needPhoneVerification,
     loading,
+    user,
     checkAuthStatus,
     logout,
     getAuthHeader
